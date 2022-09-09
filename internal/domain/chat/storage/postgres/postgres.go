@@ -47,8 +47,8 @@ func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Cha
 		ChatID:    row.ChatID,
 		CreatedAt: row.CreatedAt.Time,
 	}
-	if err := row.DeletedAt.AssignTo(&chat.DeletedAt); err != nil {
-		return nil, err
+	if row.DeletedAt.Status == pgtype.Present {
+		chat.DeletedAt = &row.DeletedAt.Time
 	}
 
 	if row.CollegeGroup.Status == pgtype.Present {
