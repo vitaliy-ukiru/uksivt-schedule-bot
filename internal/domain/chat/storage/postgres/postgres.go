@@ -13,7 +13,6 @@ import (
 
 type Repository struct {
 	q *DBQuerier
-	//p *pgxpool.Pool
 }
 
 type Connection = genericConn
