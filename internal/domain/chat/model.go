@@ -3,7 +3,7 @@ package chat
 import (
 	"time"
 
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/uksivt-schedule-api"
+	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
 type Chat struct {
