@@ -46,10 +46,6 @@ func Compile(cb Callback) (string, error) {
 			return "", ErrInvalidField(ft.Name)
 		}
 
-		//if fv.Kind() != reflect.String {
-		//	return "", ErrInvalidFieldType(ft.Name)
-		//}
-
 		tag, ok := ft.Tag.Lookup(StructTag)
 		if tag == "-" {
 			continue
