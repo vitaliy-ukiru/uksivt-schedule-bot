@@ -8,7 +8,7 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	domain "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/uksivt-schedule-api"
+	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
 type Repository struct {
