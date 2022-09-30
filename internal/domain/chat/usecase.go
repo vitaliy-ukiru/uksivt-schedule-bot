@@ -30,7 +30,7 @@ type Service struct {
 	store Storage
 }
 
-func NewService(store Storage) *Service {
+func NewService(store Storage) Usecase {
 	return &Service{store: store}
 }
 
