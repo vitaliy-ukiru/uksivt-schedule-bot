@@ -3,11 +3,11 @@
 
 ### Teh. info
 This bot is client for [mishapoiuytrewq/uksivt-schedule-backend](https://github.com/mishapoiuytrewq/uksivt-schedule-backend).
-Server hosted at `back.uksivt.com/api/v1` (on September 2022).
+Server hosted at `back.uksivt.com/api/v1` (September 2022).
 
 base idea:
 - Select default group in chat (group/private).
-- Sending schedule for next day at `h:30|00` every day (ignore sunday). 
+- Sending schedule for next day at `hh:30|00` every day (ignore sunday). 
 - Fast looking lessons on this day.
 
 
