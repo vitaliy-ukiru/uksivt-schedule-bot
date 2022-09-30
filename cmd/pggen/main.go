@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
@@ -17,8 +16,7 @@ var (
 
 func main() {
 	flag.Parse()
-	connString := fmt.Sprintf("user=${PG_USER} password=${PG_PASSWORD} dbname=${PG_DATABASE}")
-	connString = os.ExpandEnv(connString)
+	connString := os.ExpandEnv("user=${PG_USER} password=${PG_PASSWORD} dbname=${PG_DATABASE}")
 	err := pggen.Generate(pggen.GenerateOptions{
 		SchemaFiles: []string{*schemaPath},
 		ConnString:  connString,
@@ -32,5 +30,8 @@ func main() {
 		},
 	})
 
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Print("Successfully")
 }
