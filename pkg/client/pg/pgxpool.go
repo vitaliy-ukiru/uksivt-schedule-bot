@@ -24,7 +24,8 @@ func ConnString(user, pass, db, ip string, port int) string {
 		pass,
 		ip,
 		port,
-		db)
+		db,
+	)
 }
 
 type OptionFunc func(config *pgxpool.Config)
