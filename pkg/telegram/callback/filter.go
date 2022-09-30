@@ -58,7 +58,7 @@ type Handleable interface {
 }
 
 func (f Filter) Handle(group Handleable, h HandlerFunc, m ...tele.MiddlewareFunc) {
-	group.Handle(&f.data, func(c tele.Context) error {
+	group.Handle(f.data, func(c tele.Context) error {
 		data, err := f.Process(c)
 		if err != nil {
 			if errors.Is(err, ErrFilter) {
