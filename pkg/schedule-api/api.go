@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Client for uksivt-schedule api.
 type Client struct {
 	client *http.Client
 	apiUrl string
@@ -64,17 +65,16 @@ func (c Client) Teachers(ctx context.Context) ([]string, error) {
 
 var ErrInvalidWeekStart = errors.New("week start is not monday")
 
-func (c Client) Lessons(ctx context.Context, group Group, weekStart time.Time) (WeekOfLessons, error) {
+func (c Client) Lessons(ctx context.Context, group Group, weekStart time.Time) (map[string][]Lesson, error) {
 	if weekStart.Weekday() != time.Monday {
-		return WeekOfLessons{}, ErrInvalidWeekStart
+		return nil, ErrInvalidWeekStart
 	}
 
 	local := weekStart.Format("2006-01-02")
 	path := fmt.Sprintf("%s/%s/from_date/%s", methodGetGroups, group.String(), local)
 	response := make(map[string][]Lesson)
 	if err := c.get(ctx, path, &response); err != nil {
-		return WeekOfLessons{}, err
+		return nil, err
 	}
-
-	return setToWeek(response)
+	return response, nil
 }
