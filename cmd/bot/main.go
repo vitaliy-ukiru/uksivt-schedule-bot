@@ -24,7 +24,7 @@ func main() {
 	defer log.Sugar()
 
 	bot, err := tele.NewBot(tele.Settings{
-		Token:       "1604886434:AAHWVLB3R71nPz4VbVzvno3G8hKpTyWfylU",
+		Token:       "",
 		Poller:      &tele.LongPoller{Timeout: 2 * time.Second},
 		Synchronous: false,
 		Verbose:     true,
