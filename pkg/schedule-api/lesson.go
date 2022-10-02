@@ -6,62 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 )
-
-type LessonTimePair struct {
-	Start time.Time `json:"start"`
-	End   time.Time `json:"end"`
-}
-
-const (
-	lessonStartTimeFormat = "s15:04"
-	lessonEndTimeFormat   = "e15:04"
-)
-
-func (l LessonTimePair) String() string {
-	return l.Start.Format(lessonStartTimeFormat) + " " + l.End.Format(lessonEndTimeFormat)
-}
-
-func (l *LessonTimePair) UnmarshalJSON(bytes []byte) error {
-	var data string
-	if err := json.Unmarshal(bytes, &data); err != nil {
-		return err
-	}
-
-	parts := strings.SplitN(data, " ", 2)
-	start, err := time.Parse(lessonStartTimeFormat, parts[0])
-	if err != nil {
-		return err
-	}
-
-	end, err := time.Parse(lessonEndTimeFormat, parts[1])
-	if err != nil {
-		return err
-	}
-
-	//if start.After(end) {
-	//	return errors.New("start time after end")
-	//}
-
-	l.Start, l.End = start, end
-	return nil
-}
-
-type LessonTime []LessonTimePair
-
-func (l LessonTime) String() string {
-	return l.StringJoin(" ")
-}
-
-func (l LessonTime) StringJoin(sep string) string {
-	result := make([]string, len(l))
-	for i, pair := range l {
-		result[i] = pair.String()
-	}
-	return strings.Join(result, sep)
-}
 
 func (l *LessonTime) UnmarshalJSON(data []byte) error {
 	if data[0] != '"' || data[len(data)-1] != '"' {
