@@ -1,23 +1,25 @@
 package telegram
 
 import (
+	"context"
 	"time"
 
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
-	tele "gopkg.in/telebot.v3"
+	"go.uber.org/zap"
 )
 
-func getChat(c tele.Context) *chat.Chat {
-	obj := c.Get(ChatKey)
-	if obj == nil {
-		return nil
-	}
+type Chat struct {
+	*chat.Chat
+	Status chat.LookupStatus
+}
 
-	chat2, ok := obj.(*chat.Chat)
-	if !ok {
+func (h Handler) getChat(tgID int64) *Chat {
+	chatObj, status, err := h.uc.Lookup(context.TODO(), tgID)
+	if err != nil {
+		h.logger.Error("cannot get chat", zap.Error(err))
 		return nil
 	}
-	return chat2
+	return &Chat{Chat: chatObj, Status: status}
 }
 
 func getStartDayOfWeek(tm time.Time) time.Time { //get monday 00:00:00
