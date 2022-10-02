@@ -7,11 +7,22 @@ import (
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
+type LookupStatus byte
+
+const (
+	StatusNone     LookupStatus = iota // undefined or null
+	StatusCreated                      // chat created now
+	StatusFound                        // chat found in db
+	StatusRestored                     // chat was deleted before lookup
+)
+
 type Usecase interface {
 	Create(ctx context.Context, tgId int64) (*Chat, error)
 
-	Lookup(ctx context.Context, tgId int64) (*Chat, error)
+	Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error)
 	ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error)
+	//ActiveChats(ctx context.Context) ([]Chat, error)
+
 	SetGroup(ctx context.Context, chatTgID int64, group scheduleapi.Group) error
 	ClearGroup(ctx context.Context, chatTgID int64) error
 	Restore(ctx context.Context, chatTgID int64) (*Chat, error)
@@ -30,7 +41,7 @@ type Service struct {
 	store Storage
 }
 
-func NewService(store Storage) Usecase {
+func NewService(store Storage) *Service {
 	return &Service{store: store}
 }
 
@@ -47,27 +58,30 @@ func (s Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
 
 }
 
-func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, error) {
+func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error) {
 	chat, err := s.ByTelegramID(ctx, tgId)
 	if err != nil {
 		if errors.Is(err, ErrChatNotFound) {
-			return s.Create(ctx, tgId)
+			chat, err = s.Create(ctx, tgId)
+			return chat, StatusCreated, err
 		}
 
 		if errors.Is(err, ErrChatDeleted) {
 			// in this case Usecase returning *Chat and err ErrChatDeleted
-			// see Service.ByTelegramID method
+			// see Service.ByTelegramID method.
+			// For optimize db queries I make only restore query
+			// i.e. I already have chat instance.
 			if err := s.store.RestoreFromDeleted(ctx, tgId); err != nil {
-				return nil, err
+				return nil, StatusNone, err
 			}
 			//TODO: add logs whet chat restored
 			chat.DeletedAt = nil
-			return chat, nil
+			return chat, StatusRestored, nil
 		}
 
-		return nil, err
+		return nil, StatusNone, err
 	}
-	return chat, nil
+	return chat, StatusFound, nil
 }
 
 func (s Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
