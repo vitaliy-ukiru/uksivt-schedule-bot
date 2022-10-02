@@ -24,7 +24,7 @@ type Handler struct {
 func NewHandler(
 	uc chat.Usecase,
 	uksivt *scheduleapi.Client,
-	groups groups.Groups,
+	groups groups.Service,
 	logger *zap.Logger,
 ) *Handler {
 
