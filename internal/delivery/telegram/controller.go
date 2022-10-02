@@ -1,8 +1,6 @@
 package telegram
 
 import (
-	"context"
-
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
@@ -52,24 +50,10 @@ func (h Handler) Route(m *fsm.Manager) {
 	m.Bind("/state", fsm.AnyState, func(c tele.Context, state fsm.FSMContext) error {
 		return c.Send(state.State().String())
 	})
+
 	m.Bind("/group", fsm.DefaultState, h.GetGroupCommand)
 	m.Bind("/lessons", fsm.DefaultState, h.ScheduleCommand)
 	keyboards.
-		ScheduleCallback.
-		MustFilter().
+		ScheduleCallback.MustFilter().
 		Handle(m.Group(), h.ScheduleExplorerCallback)
-}
-
-const ChatKey = "chat"
-
-func (h Handler) ChatMiddleware(next tele.HandlerFunc) tele.HandlerFunc {
-	return func(c tele.Context) error {
-		chatObj, err := h.uc.Lookup(context.TODO(), c.Chat().ID)
-		if err != nil {
-			h.logger.Error("cannot get chat", zap.Error(err))
-			return err
-		}
-		c.Set(ChatKey, chatObj)
-		return next(c)
-	}
 }
