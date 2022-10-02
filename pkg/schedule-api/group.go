@@ -2,7 +2,6 @@ package scheduleapi
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"regexp"
 	"strconv"
@@ -17,42 +16,20 @@ type Group struct {
 	Spec   string `json:"spec"`
 }
 
+func (g *Group) UnmarshalText(text []byte) error {
+	group, err := ParseGroup(unsafeBytesToString(text))
+	if err != nil {
+		return err
+	}
+	*g = group
+	return nil
+}
+
 func (g Group) Value() (driver.Value, error) {
 	return g.String(), nil
 }
 
 var ErrInvalidGroup = errors.New("invalid group format")
-
-func (g *Group) UnmarshalJSON(bytes []byte) error {
-	if bytes[0] == '"' && bytes[len(bytes)-1] == '"' { // its string
-		var strMessage string
-
-		if err := json.Unmarshal(bytes, &strMessage); err != nil {
-			return err
-		}
-		group, err := ParseGroup(strMessage)
-		if err != nil {
-			return err
-		}
-		g.Year = group.Year
-		g.Spec = group.Spec
-		g.Number = group.Number
-		return nil
-	}
-
-	var group struct {
-		Year   int    `json:"year"`
-		Number int    `json:"number"`
-		Spec   string `json:"spec"`
-	}
-
-	if err := json.Unmarshal(bytes, &group); err != nil {
-		return err
-	}
-
-	*g = group
-	return nil
-}
 
 func (g Group) String() string {
 	year := strconv.Itoa(g.Year)
