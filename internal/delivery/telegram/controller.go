@@ -37,8 +37,9 @@ func NewHandler(
 }
 
 func (h Handler) Route(m *fsm.Manager) {
-	m.Use(h.ChatMiddleware)
 	m.Use(middleware.AutoRespond())
+	m.Group().Handle("/start", h.StartCommand)
+
 	m.Bind("/select_group", fsm.DefaultState, h.SGCommand)
 	{
 		unique := "\f" + keyboards.SGCallback
