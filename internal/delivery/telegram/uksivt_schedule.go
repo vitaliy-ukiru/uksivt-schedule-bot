@@ -14,7 +14,7 @@ import (
 )
 
 func (h Handler) GetGroupCommand(c tele.Context, _ fsm.FSMContext) error {
-	chat := getChat(c)
+	chat := h.getChat(c.Chat().ID)
 	if chat == nil {
 		return c.Send("error: cannot get chat")
 	}
@@ -26,7 +26,7 @@ func (h Handler) GetGroupCommand(c tele.Context, _ fsm.FSMContext) error {
 }
 
 func (h Handler) ScheduleCommand(c tele.Context, _ fsm.FSMContext) error {
-	chat := getChat(c)
+	chat := h.getChat(c.Chat().ID)
 	if chat == nil {
 		return c.Send("error: cannot get chat")
 	}
