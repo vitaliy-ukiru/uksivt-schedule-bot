@@ -1,17 +1,2 @@
-database:
-    host: localhost
-    port: 5432
-
-uksivt:
-    schedule-api:
-      host: back.uksivt.com
-      path: /api/v1
-
-http:
-  ssl:
-    cert: ...
-
-  port: 80
-
-telegram:
-
+schedule-api:
+   url: https://back.uksivt.com/api/v1
