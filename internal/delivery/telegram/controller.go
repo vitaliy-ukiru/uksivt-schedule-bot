@@ -4,7 +4,7 @@ import (
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/groups"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/groups"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"

@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 	"sort"
+
+	"github.com/pkg/errors"
 )
 
 type InMemoryService struct {
@@ -51,7 +53,7 @@ func NewInMemoryService(groups map[int]map[string][]int) *InMemoryService {
 func NewInMemoryFromReader(reader io.Reader) (*InMemoryService, error) {
 	m := make(map[int]map[string][]int)
 	if err := json.NewDecoder(reader).Decode(&m); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "in-mem group service: cannot decode")
 	}
 
 	return &InMemoryService{groups: m}, nil
@@ -60,7 +62,7 @@ func NewInMemoryFromReader(reader io.Reader) (*InMemoryService, error) {
 func NewInMemoryFromFile(path string) (*InMemoryService, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "in-mem group service: cannot open file")
 	}
 	defer file.Close()
 	return NewInMemoryFromReader(file)
