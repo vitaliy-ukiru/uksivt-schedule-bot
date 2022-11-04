@@ -13,7 +13,8 @@ import (
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat/storage/postgres"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/groups"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/groups"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/schedule"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/client/pg"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"go.uber.org/zap"
@@ -21,9 +22,9 @@ import (
 )
 
 var (
-	configPath     = flag.String("config", "./config/app.yaml", "path to config file")
+	configPath     = flag.String("config", "./configs/app.yaml", "path to config file")
+	groupsFilePath = flag.String("groups", "./configs/groups.json", "path to groups.json")
 	envFilePath    = flag.String("env-file", "", "path to .env file")
-	groupsFilePath = flag.String("groups", "./data/groups.json", "path to groups.json")
 )
 
 func loadEnv() error {
@@ -39,7 +40,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer log.Sync()
+	defer func() {
+		if err := log.Sync(); err != nil {
+			panic(err)
+		}
+	}()
 
 	if err := loadEnv(); err != nil {
 		log.Fatal("cannot read env file",
@@ -84,9 +89,16 @@ func main() {
 		log.Fatal("cannot connect to pg pool", zap.Error(err))
 	}
 
-	chatStorage := postgres.NewRepository(pool)
-	chatService := chat.NewService(chatStorage)
-	uksivtSchedule := scheduleapi.NewClient(nil, cfg.Schedule.ApiURL)
+	var (
+		chatStorage = postgres.NewRepository(pool)
+		chatService = chat.NewService(chatStorage)
+	)
+
+	var (
+		uksivtClient   = scheduleapi.NewClient(nil, cfg.Schedule.ApiURL)
+		uksivtSchedule = schedule.NewService(uksivtClient)
+	)
+
 	handler := telegram.NewHandler(chatService, uksivtSchedule, groupsService, log)
 
 	storage := memory.NewStorage()
