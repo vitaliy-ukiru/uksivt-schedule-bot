@@ -13,12 +13,16 @@ import (
 
 type Repository struct {
 	q *DBQuerier
+	c Connection
 }
 
-type Connection = genericConn
+type Connection interface {
+	genericConn
+	BeginFunc(ctx context.Context, f func(pgx.Tx) error) error
+}
 
 func NewRepository(conn Connection) *Repository {
-	return &Repository{q: NewQuerier(conn)}
+	return &Repository{q: NewQuerier(conn), c: conn}
 }
 
 func (r Repository) Create(ctx context.Context, chatId int64) (domain.CreateChatDTO, error) {
@@ -51,10 +55,11 @@ func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Cha
 	}
 
 	if row.CollegeGroup.Status == pgtype.Present {
-		*chat.Group, err = scheduleapi.ParseGroup(row.CollegeGroup.String)
+		g, err := scheduleapi.ParseGroup(row.CollegeGroup.String)
 		if err != nil {
 			return nil, errors.Wrap(err, "pg.by_tg.parse_group")
 		}
+		chat.Group = &g
 	}
 
 	return chat, nil
@@ -96,4 +101,11 @@ func checkRowsAffected(tag pgconn.CommandTag) (err error) {
 		err = domain.ErrNotModified
 	}
 	return
+}
+
+func (r Repository) Session(ctx context.Context, fn func(session domain.Storage) error) error {
+	return r.c.BeginFunc(ctx, func(tx pgx.Tx) error {
+		withTx, _ := r.q.WithTx(tx)
+		return fn(&Repository{q: withTx, c: tx})
+	})
 }

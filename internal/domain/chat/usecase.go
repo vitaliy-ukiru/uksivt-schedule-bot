@@ -35,6 +35,7 @@ type Storage interface {
 	UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
 	Delete(ctx context.Context, chatId int64) error
+	Session(ctx context.Context, fn func(session Storage) error) error
 }
 
 type Service struct {
@@ -68,7 +69,7 @@ func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, e
 		chat, err = s.Create(ctx, tgId)
 
 		var status LookupStatus
-		if err != nil {
+		if err == nil {
 			status = StatusCreated
 		}
 		return chat, status, err
@@ -116,11 +117,22 @@ func (s Service) ClearGroup(ctx context.Context, chatTgID int64) error {
 }
 
 func (s Service) Restore(ctx context.Context, chatTgID int64) (*Chat, error) {
-	if err := s.store.RestoreFromDeleted(ctx, chatTgID); err != nil {
-		return nil, errors.Wrapf(err, "cannot restore chat=%d", chatTgID)
-	}
+	var chat *Chat
+	err := s.store.Session(ctx, func(store Storage) error {
+		var err error
+		if err = store.RestoreFromDeleted(ctx, chatTgID); err != nil {
+			return errors.Wrapf(err, "cannot restore chat=%d", chatTgID)
+		}
 
-	return s.ByTelegramID(ctx, chatTgID)
+		chat, err = s.withSession(store).ByTelegramID(ctx, chatTgID)
+		return errors.Wrapf(err, "cannot find restored chat=%d", chatTgID)
+	})
+
+	return chat, err
+
+}
+func (s Service) withSession(session Storage) Service {
+	return Service{store: session}
 }
 
 func (s Service) Delete(ctx context.Context, chatTgID int64) error {
