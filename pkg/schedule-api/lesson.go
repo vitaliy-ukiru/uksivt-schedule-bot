@@ -1,45 +1,10 @@
 package scheduleapi
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 )
-
-func (l *LessonTime) UnmarshalJSON(data []byte) error {
-	if data[0] != '"' || data[len(data)-1] != '"' {
-		return errors.New("invalid type for LessonTime")
-	}
-
-	msg := data[1 : len(data)-1]
-	split := bytes.Split(msg, []byte{' '})
-	if len(split)%2 != 0 {
-		return errors.New("invalid count of time pairs")
-	}
-	buff := bytes.NewBuffer(nil)
-	for i := 0; i < len(split); i += 2 {
-		buff.Reset()
-
-		start, end := append([]byte(nil), split[i]...), split[i+1]
-		var pair LessonTimePair
-
-		buff.WriteByte('"')
-		buff.Write(start)
-		buff.WriteByte(' ')
-		buff.Write(end)
-		buff.WriteByte('"')
-
-		if err := json.NewDecoder(buff).Decode(&pair); err != nil {
-			return err
-		}
-		*l = append(*l, pair)
-	}
-
-	return nil
-}
 
 type Lesson struct {
 	Group        string     `json:"college_group"`

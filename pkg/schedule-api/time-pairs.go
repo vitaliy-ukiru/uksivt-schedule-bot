@@ -1,6 +1,9 @@
 package scheduleapi
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"strings"
 	"time"
 	"unsafe"
@@ -18,14 +21,6 @@ const (
 
 func (l LessonTimePair) String() string {
 	return l.Start.Format(lessonStartTimeFormat) + " " + l.End.Format(lessonEndTimeFormat)
-}
-
-func unsafeBytesToString(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}
-
-func (l LessonTimePair) MarshalText() ([]byte, error) {
-	return []byte(l.String()), nil
 }
 
 func (l *LessonTimePair) UnmarshalText(text []byte) error {
@@ -56,4 +51,40 @@ func (l LessonTime) StringJoin(sep string) string {
 		result[i] = pair.String()
 	}
 	return strings.Join(result, sep)
+}
+
+func (l *LessonTime) UnmarshalText(text []byte) error {
+	split := bytes.Split(text, []byte{' '})
+	if len(split)%2 != 0 {
+		return errors.New("invalid count of time pairs")
+	}
+	buff := bytes.NewBuffer(nil)
+
+	for i := 0; i < len(split); i += 2 {
+		buff.Reset()
+
+		start, end := split[i], split[i+1]
+
+		{
+			buff.WriteByte('"')
+			buff.Write(start)
+
+			buff.WriteByte(' ')
+
+			buff.Write(end)
+			buff.WriteByte('"')
+		}
+
+		var pair LessonTimePair
+		if err := json.NewDecoder(buff).Decode(&pair); err != nil {
+			return err
+		}
+		*l = append(*l, pair)
+	}
+
+	return nil
+}
+
+func unsafeBytesToString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
