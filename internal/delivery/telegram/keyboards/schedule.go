@@ -20,9 +20,21 @@ func ScheduleButton(text string, day time.Time, group scheduleapi.Group) tele.Bt
 
 func ScheduleMarkup(today time.Time, group scheduleapi.Group) *tele.ReplyMarkup {
 	b := keyboard.NewBuilder(2)
+
 	b.Add(
-		ScheduleButton("Пред. день", today.Add(-24*time.Hour), group),
-		ScheduleButton("След. день", today.Add(24*time.Hour), group),
+		ScheduleButton("Пред. день", addDays(today, -1, time.Sunday), group),
+		ScheduleButton("След. день", addDays(today, +1, time.Sunday), group),
 	)
+
 	return b.Inline()
+}
+
+func addDays(t time.Time, days int, skip time.Weekday) time.Time {
+	duration := time.Duration(days) * 24 * time.Hour
+	t = t.Add(duration)
+	if t.Weekday() == skip {
+		t = t.Add(duration)
+	}
+
+	return t
 }
