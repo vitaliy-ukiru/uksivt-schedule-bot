@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"context"
-	"errors"
 
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
+	"github.com/pkg/errors"
 	domain "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
@@ -24,7 +24,7 @@ func NewRepository(conn Connection) *Repository {
 func (r Repository) Create(ctx context.Context, chatId int64) (domain.CreateChatDTO, error) {
 	chatRow, err := r.q.CreateChat(ctx, chatId)
 	if err != nil {
-		return domain.CreateChatDTO{}, err
+		return domain.CreateChatDTO{}, errors.Wrap(err, "pg.create")
 	}
 
 	return domain.CreateChatDTO{
@@ -39,7 +39,7 @@ func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Cha
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, domain.ErrChatNotFound
 		}
-		return nil, err
+		return nil, errors.Wrap(err, "pg.by_tg")
 	}
 	chat := &domain.Chat{
 		ID:        row.ID,
@@ -51,11 +51,10 @@ func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Cha
 	}
 
 	if row.CollegeGroup.Status == pgtype.Present {
-		group, err := scheduleapi.ParseGroup(row.CollegeGroup.String)
+		*chat.Group, err = scheduleapi.ParseGroup(row.CollegeGroup.String)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "pg.by_tg.parse_group")
 		}
-		chat.Group = &group
 	}
 
 	return chat, nil
@@ -71,7 +70,7 @@ func (r Repository) UpdateChatGroup(ctx context.Context, id int64, group *schedu
 	}
 	tag, err := r.q.UpdateGroup(ctx, g, id)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "pg.update")
 	}
 	return checkRowsAffected(tag)
 }
@@ -87,14 +86,14 @@ func (r Repository) RestoreFromDeleted(ctx context.Context, id int64) error {
 func (r Repository) Delete(ctx context.Context, chatId int64) error {
 	tag, err := r.q.Delete(ctx, chatId)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "pg.delete")
 	}
 	return checkRowsAffected(tag)
 }
 
-func checkRowsAffected(tag pgconn.CommandTag) error {
+func checkRowsAffected(tag pgconn.CommandTag) (err error) {
 	if tag.RowsAffected() == 0 {
-		return domain.ErrNotModified
+		err = domain.ErrNotModified
 	}
-	return nil
+	return
 }
