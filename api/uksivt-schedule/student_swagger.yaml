@@ -1,0 +1,80 @@
+openapi: 3.0.1
+info:
+  title: UKSIVT schedule backend
+  version: v1
+servers:
+  - url: https://back.uksivt.com/api/v1
+paths:
+  /college_group:
+    get:
+      responses:
+        200:
+          description: List of groups
+          content:
+            '*/*':
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: 20П-1
+  /college_group/{group}/from_date/{from_date}:
+    get:
+      parameters:
+        - name: group
+          in: path
+          description: College group.
+          required: true
+          schema:
+            type: string
+        - name: from_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        200:
+          description: Lessons on week that starts {from_date}
+          content:
+            '*/*':
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Lesson'
+                description: Map<string, Lesson>
+components:
+  schemas:
+    Lesson:
+      required:
+        - college_group
+        - day_of_week
+        - lesson
+        - lesson_hall
+        - lesson_number
+        - replacement
+        - teacher
+        - time
+      type: object
+      properties:
+        lesson:
+          type: string
+          description: Name of lesson
+        lesson_number:
+          type: integer
+          description: Number of lesson
+        lesson_hall:
+          type: string
+        replacement:
+          type: boolean
+        college_group:
+          type: string
+        teacher:
+          type: string
+        day_of_week:
+          type: integer
+        time:
+          type: string
+          description: |
+            Time of lesson have format: (s{start_time} e{end_time})...
+            This pair can be repeats. For example, valid value: s11:15 e12:00 s12:45 e13:30
+          example: s7:50 e9:20
