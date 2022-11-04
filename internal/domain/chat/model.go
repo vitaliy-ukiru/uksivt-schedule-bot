@@ -13,3 +13,7 @@ type Chat struct {
 	CreatedAt time.Time          `json:"created_a,omitempty"`
 	DeletedAt *time.Time         `json:"deleted_at,omitempty"`
 }
+
+func (c Chat) IsDeleted() bool {
+	return c.DeletedAt != nil
+}
