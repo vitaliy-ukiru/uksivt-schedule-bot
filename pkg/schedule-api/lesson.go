@@ -28,25 +28,20 @@ func (l Lesson) String() string {
 	)
 }
 
-type WeekOfLessons [7][]Lesson
+type WeekOfLessons [6][]Lesson
 
 var ErrInvalidDayNumber = errors.New("day number out of time.Weekday")
 
-func SetToWeek(week map[string][]Lesson) (result WeekOfLessons, err error) {
-	var dayInt int
+func SetToWeek(week map[time.Weekday][]Lesson) (WeekOfLessons, error) {
+	var result WeekOfLessons
 	for day, lessons := range week {
-		dayInt, err = strconv.Atoi(day)
-		if err != nil {
-			return
-		}
-		weekDay := time.Weekday(dayInt)
-		dayInt-- // in api days starts from 1
-		if weekDay < time.Monday || weekDay > time.Saturday {
-			err = ErrInvalidDayNumber
-			return
+		if day < time.Monday || day > time.Saturday {
+			return result, ErrInvalidDayNumber
 		}
 
-		result[dayInt] = lessons
+		// API and time.Weekday storages Monday as 1
+		// but WeekOfLessons starts with 0 (like everything in CS)
+		result[day-1] = lessons
 	}
-	return
+	return result, nil
 }
