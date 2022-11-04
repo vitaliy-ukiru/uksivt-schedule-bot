@@ -18,10 +18,20 @@ type Lesson struct {
 }
 
 func (l Lesson) String() string {
+	return l.StringReplacement("")
+}
+
+// StringReplacement returns string view of Lesson and add onReplacement
+// before Lesson.Name. IT NOT ADD WHITESPACE. Just join.
+func (l Lesson) StringReplacement(onReplacement string) string {
+	lesson := l.Name
+	if l.Replacement {
+		lesson = onReplacement + lesson
+	}
 	return fmt.Sprintf(
 		"%d. %s - %s (%s)\n  %s",
 		l.LessonNumber,
-		l.Name,
+		lesson,
 		l.Teacher,
 		l.LessonHall,
 		l.Time.StringJoin("\n  "),
