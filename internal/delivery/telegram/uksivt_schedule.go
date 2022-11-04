@@ -6,10 +6,12 @@ import (
 	"strings"
 	"time"
 
+	rtime "github.com/ivahaev/russian-time"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
+
 	tele "gopkg.in/telebot.v3"
 )
 
@@ -78,7 +80,14 @@ func (h Handler) ScheduleExplorerCallback(c tele.Context, data callback.M) error
 
 func lessonsToString(day time.Time, lessons []scheduleapi.Lesson) string {
 	buff := make([]string, len(lessons)+1)
-	buff[0] = day.Format("January 02 | Monday")
+
+	lt := rtime.Time(day)
+	buff[0] = fmt.Sprintf(
+		"%d %s | %s",
+		day.Day(),
+		lt.Month().StringInCase(),
+		lt.Weekday(),
+	)
 	for i, lesson := range lessons {
 		buff[i+1] = lesson.String()
 	}

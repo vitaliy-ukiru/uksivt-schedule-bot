@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/ilyakaznacheev/cleanenv v1.3.0
+	github.com/ivahaev/russian-time v0.0.0-20150617104445-2cf0588a2348
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgtype v1.12.0
 	github.com/jackc/pgx/v4 v4.17.2
