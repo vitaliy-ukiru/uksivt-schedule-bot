@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	rtime "github.com/ivahaev/russian-time"
+	"github.com/ivahaev/russian-time"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
@@ -89,7 +89,7 @@ func lessonsToString(day time.Time, lessons []scheduleapi.Lesson) string {
 		lt.Weekday(),
 	)
 	for i, lesson := range lessons {
-		buff[i+1] = lesson.String()
+		buff[i+1] = lesson.StringReplacement("<b>[ЗАМЕНА]</b> ")
 	}
 	return strings.Join(buff, "\n\n")
 }
