@@ -69,6 +69,7 @@ func main() {
 		Poller:      &tele.LongPoller{Timeout: 2 * time.Second},
 		Synchronous: false,
 		Verbose:     true,
+		ParseMode:   tele.ModeHTML,
 	})
 	if err != nil {
 		log.Fatal("cannot init Bot", zap.Error(err))
