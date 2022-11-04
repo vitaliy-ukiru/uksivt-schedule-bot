@@ -2,8 +2,8 @@ package chat
 
 import (
 	"context"
-	"errors"
 
+	"github.com/pkg/errors"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
@@ -48,7 +48,7 @@ func NewService(store Storage) *Service {
 func (s Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
 	dto, err := s.store.Create(ctx, tgId)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "cannot create chat id=%d", tgId)
 	}
 	return &Chat{
 		ID:        dto.ID,
@@ -60,57 +60,72 @@ func (s Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
 
 func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error) {
 	chat, err := s.ByTelegramID(ctx, tgId)
-	if err != nil {
-		if errors.Is(err, ErrChatNotFound) {
-			chat, err = s.Create(ctx, tgId)
-			return chat, StatusCreated, err
-		}
-
-		if errors.Is(err, ErrChatDeleted) {
-			// in this case Usecase returning *Chat and err ErrChatDeleted
-			// see Service.ByTelegramID method.
-			// For optimize db queries I make only restore query
-			// i.e. I already have chat instance.
-			if err := s.store.RestoreFromDeleted(ctx, tgId); err != nil {
-				return nil, StatusNone, err
-			}
-			//TODO: add logs whet chat restored
-			chat.DeletedAt = nil
-			return chat, StatusRestored, nil
-		}
-
-		return nil, StatusNone, err
+	if err == nil {
+		return chat, StatusFound, nil
 	}
-	return chat, StatusFound, nil
+
+	if errors.Is(err, ErrChatNotFound) {
+		chat, err = s.Create(ctx, tgId)
+
+		var status LookupStatus
+		if err != nil {
+			status = StatusCreated
+		}
+		return chat, status, err
+	}
+
+	if errors.Is(err, ErrChatDeleted) {
+		// in this case Usecase returning *Chat and err ErrChatDeleted
+		// see Service.ByTelegramID method.
+		// For optimize db queries I make only restore query
+		// i.e. I already have chat instance.
+		if err := s.store.RestoreFromDeleted(ctx, tgId); err != nil {
+			return nil, StatusNone, err
+		}
+		//TODO: add logs whet chat restored
+		chat.DeletedAt = nil
+		return chat, StatusRestored, nil
+	}
+
+	return nil, StatusNone, err
 }
 
 func (s Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
 	chat, err := s.store.FindByTelegramID(ctx, chatTgId)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "cannot find_by_tg chat=%d", chatTgId)
 	}
-	if chat.DeletedAt != nil {
+	if chat.IsDeleted() {
 		return chat, ErrChatDeleted
 	}
 	return chat, nil
 }
 
 func (s Service) SetGroup(ctx context.Context, chatTgID int64, group scheduleapi.Group) error {
-	return s.store.UpdateChatGroup(ctx, chatTgID, &group)
+	return errors.Wrapf(
+		s.store.UpdateChatGroup(ctx, chatTgID, &group),
+		"cannot set group chat=%d group=%+v", chatTgID, group,
+	)
 }
 
 func (s Service) ClearGroup(ctx context.Context, chatTgID int64) error {
-	return s.store.UpdateChatGroup(ctx, chatTgID, nil)
+	return errors.Wrapf(
+		s.store.UpdateChatGroup(ctx, chatTgID, nil),
+		"cannot delete group chat=%d", chatTgID,
+	)
 }
 
 func (s Service) Restore(ctx context.Context, chatTgID int64) (*Chat, error) {
 	if err := s.store.RestoreFromDeleted(ctx, chatTgID); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "cannot restore chat=%d", chatTgID)
 	}
 
 	return s.ByTelegramID(ctx, chatTgID)
 }
 
 func (s Service) Delete(ctx context.Context, chatTgID int64) error {
-	return s.store.Delete(ctx, chatTgID)
+	return errors.Wrapf(
+		s.store.Delete(ctx, chatTgID),
+		"cannot delete chat=%d", chatTgID,
+	)
 }
