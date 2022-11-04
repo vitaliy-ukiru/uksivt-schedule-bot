@@ -5,7 +5,7 @@ import (
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/groups"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/schedule"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
@@ -13,7 +13,7 @@ import (
 
 type Handler struct {
 	uc     chat.Usecase
-	uksivt *scheduleapi.Client
+	uksivt schedule.Usecase
 	groups groups.Service
 
 	logger *zap.Logger
@@ -21,7 +21,7 @@ type Handler struct {
 
 func NewHandler(
 	uc chat.Usecase,
-	uksivt *scheduleapi.Client,
+	uksivt schedule.Usecase,
 	groups groups.Service,
 	logger *zap.Logger,
 ) *Handler {
