@@ -41,20 +41,21 @@ func (h Handler) ScheduleCommand(c tele.Context, _ fsm.FSMContext) error {
 	if chat.Group != nil {
 		group = *chat.Group
 	}
+
 	if payload != "" {
 		var err error
 		group, err = scheduleapi.ParseGroup(c.Data())
 		if err != nil {
 			return c.Send("Не получилось достать группу из аргумента команды.\n" +
-				"Пример корректного ввода: 22ОИБ-1")
+				"Пример корректного ввода: 20П-1")
 		}
 	}
 	t := time.Now()
-	lessons, err := h.getLessons(group, t)
+	lessons, err := h.uksivt.LessonsOneDay(context.TODO(), group, t)
 	if err != nil {
 		return c.Send("error: " + err.Error())
 	}
-	return c.Send(lessons, keyboards.ScheduleMarkup(t, group))
+	return c.Send(lessonsToString(t, lessons), keyboards.ScheduleMarkup(t, group))
 }
 
 func (h Handler) ScheduleExplorerCallback(c tele.Context, data callback.M) error {
@@ -67,32 +68,21 @@ func (h Handler) ScheduleExplorerCallback(c tele.Context, data callback.M) error
 		return answerCallback(c, "invalid callback group", true)
 	}
 
-	lessons, err := h.getLessons(group, day)
+	lessons, err := h.uksivt.LessonsOneDay(context.TODO(), group, day)
 	if err != nil {
 		return answerCallback(c, "error: "+err.Error(), true)
 	}
-	return c.EditOrSend(lessons, keyboards.ScheduleMarkup(day, group))
+	return c.EditOrSend(lessonsToString(day, lessons), keyboards.ScheduleMarkup(day, group))
 
 }
 
-func (h Handler) getLessons(group scheduleapi.Group, today time.Time) (string, error) {
-	setLessons, err := h.uksivt.Lessons(context.TODO(), group, getStartDayOfWeek(today))
-	if err != nil {
-		return "", err
-	}
-
-	lessons, err := scheduleapi.SetToWeek(setLessons)
-	if err != nil {
-		return "", err
-	}
-
-	lessonsToday := lessons[today.Weekday()-1]
-	buff := make([]string, len(lessonsToday)+1)
-	buff[0] = today.Format("January 02 | Monday")
-	for i, lesson := range lessonsToday {
+func lessonsToString(day time.Time, lessons []scheduleapi.Lesson) string {
+	buff := make([]string, len(lessons)+1)
+	buff[0] = day.Format("January 02 | Monday")
+	for i, lesson := range lessons {
 		buff[i+1] = lesson.String()
 	}
-	return strings.Join(buff, "\n\n"), nil
+	return strings.Join(buff, "\n\n")
 }
 
 func answerCallback(c tele.Context, text string, alert bool) error {
