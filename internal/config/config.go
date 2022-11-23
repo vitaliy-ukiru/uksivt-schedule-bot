@@ -17,7 +17,8 @@ type Config struct {
 		Port     int    `yaml:"port" env:"PG_PORT" env-default:"5432"`
 	} `yaml:"database"`
 	Telegram struct {
-		Token string `env:"BOT_TOKEN"`
+		Token           string        `env:"BOT_TOKEN"`
+		SchedulerPeriod time.Duration `yaml:"cron_period" env:"PG_PORT" env-default:"1h"`
 	}
 	Schedule struct {
 		ApiURL string `yaml:"url"`
