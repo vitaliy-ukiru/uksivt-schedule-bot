@@ -19,6 +19,7 @@ const (
 type Usecase interface {
 	Create(ctx context.Context, tgId int64) (*Chat, error)
 
+	ByID(ctx context.Context, chatId int64) (*Chat, error)
 	Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error)
 	ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error)
 	//ActiveChats(ctx context.Context) ([]Chat, error)
