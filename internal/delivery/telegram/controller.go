@@ -3,10 +3,12 @@ package telegram
 import (
 	"github.com/go-co-op/gocron"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/groups"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/schedule"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 	"gopkg.in/telebot.v3/middleware"
@@ -17,7 +19,10 @@ type Handler struct {
 	uksivt schedule.Usecase
 	groups groups.Service
 
+	cfg    *config.Config
 	logger *zap.Logger
+	bot    *tele.Bot
+	crons  scheduler.CronFetcher
 }
 
 func NewHandler(
