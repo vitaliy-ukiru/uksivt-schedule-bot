@@ -9,13 +9,16 @@ import (
 )
 
 var (
-	schemaPath = flag.String("schema", "./db/schema", "path to schema file")
-	outputDir  = flag.String("output", "./internal/domain/chat/storage/postgres/", "path to output dir")
+	schemaPath = flag.String("schema", "./db/schema.sql", "path to schema file")
+	outputDir  = flag.String("output", "", "path to output dir")
 	queryFile  = flag.String("query", "./db/queries.sql", "path to queries file for pggen")
 )
 
 func main() {
 	flag.Parse()
+	if *outputDir == "" {
+		log.Fatal("output dir must be not empty")
+	}
 	connString := os.ExpandEnv("user=${PG_USER} password=${PG_PASSWORD} dbname=${PG_DATABASE}")
 	err := pggen.Generate(pggen.GenerateOptions{
 		SchemaFiles: []string{*schemaPath},
