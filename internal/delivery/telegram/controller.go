@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"github.com/go-co-op/gocron"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
@@ -56,4 +57,12 @@ func (h Handler) Route(m *fsm.Manager) {
 	keyboards.
 		ScheduleCallback.MustFilter().
 		Handle(m.Group(), h.ScheduleExplorerCallback)
+}
+
+func (h Handler) Schedule(s *gocron.Scheduler) error {
+	_, err := s.Every(h.cfg.Telegram.SchedulerPeriod).Do(h.CronJobSchedule)
+	if err != nil {
+		return err
+	}
+	return nil
 }
