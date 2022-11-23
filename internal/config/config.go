@@ -2,7 +2,7 @@ package config
 
 import (
 	"io"
-	"sync"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"gopkg.in/yaml.v3"
