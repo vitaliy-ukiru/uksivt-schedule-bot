@@ -28,11 +28,10 @@ type Config struct {
 var cfg *Config
 
 func Init(file io.Reader) (err error) {
-	once.Do(func() {
-		cfg = new(Config)
-		if err = yaml.NewDecoder(file).Decode(cfg); err != nil {
-			return
-		}
+	cfg = new(Config)
+	if err = yaml.NewDecoder(file).Decode(cfg); err != nil {
+		return
+	}
 
 	if err = cleanenv.ReadEnv(cfg); err != nil {
 		return
