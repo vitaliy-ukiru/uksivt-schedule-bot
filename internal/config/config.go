@@ -26,7 +26,6 @@ type Config struct {
 }
 
 var cfg *Config
-var once sync.Once
 
 func Init(file io.Reader) (err error) {
 	once.Do(func() {
@@ -35,13 +34,16 @@ func Init(file io.Reader) (err error) {
 			return
 		}
 
-		if err = cleanenv.ReadEnv(cfg); err != nil {
-			return
-		}
-	})
+	if err = cleanenv.ReadEnv(cfg); err != nil {
+		return
+	}
+
 	return
 }
 
 func Get() *Config {
+	if cfg == nil {
+		panic("need init config")
+	}
 	return cfg
 }
