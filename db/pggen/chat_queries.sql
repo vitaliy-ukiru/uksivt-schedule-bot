@@ -1,12 +1,18 @@
 --name: CreateChat :one
 INSERT INTO chats(chat_id)
-VALUES (pggen.arg('ChatID'))
-RETURNING id, created_at;
+VALUES (pggen.arg('ChatID')) RETURNING id, created_at;
 
 --name: FindByTgID :one
 SELECT id, chat_id, college_group, created_at, deleted_at
 FROM chats
 WHERE chat_id = pggen.arg('ChatID');
+
+
+--name: FindByID :one
+SELECT id, chat_id, college_group, created_at, deleted_at
+FROM chats
+WHERE id = pggen.arg('ID');
+
 
 --name: UpdateGroup :exec
 UPDATE chats

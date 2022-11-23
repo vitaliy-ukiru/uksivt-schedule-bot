@@ -37,6 +37,18 @@ func (r Repository) Create(ctx context.Context, chatId int64) (domain.CreateChat
 	}, nil
 }
 
+func (r Repository) FindByID(ctx context.Context, chatId int64) (*domain.Chat, error) {
+	row, err := r.q.FindByID(ctx, chatId)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, domain.ErrChatNotFound
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "pg.by_id")
+	}
+	chat, err := rowToChat(rowType(row))
+	return chat, errors.Wrap(err, "pg.by_id.convert")
+}
+
 func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Chat, error) {
 	row, err := r.q.FindByTgID(ctx, id)
 	if err != nil {
@@ -45,24 +57,9 @@ func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Cha
 		}
 		return nil, errors.Wrap(err, "pg.by_tg")
 	}
-	chat := &domain.Chat{
-		ID:        row.ID,
-		ChatID:    row.ChatID,
-		CreatedAt: row.CreatedAt.Time,
-	}
-	if row.DeletedAt.Status == pgtype.Present {
-		chat.DeletedAt = &row.DeletedAt.Time
-	}
+	chat, err := rowToChat(rowType(row))
+	return chat, errors.Wrap(err, "pg.by_tg.convert")
 
-	if row.CollegeGroup.Status == pgtype.Present {
-		g, err := scheduleapi.ParseGroup(row.CollegeGroup.String)
-		if err != nil {
-			return nil, errors.Wrap(err, "pg.by_tg.parse_group")
-		}
-		chat.Group = &g
-	}
-
-	return chat, nil
 }
 
 func (r Repository) UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error {
@@ -108,4 +105,27 @@ func (r Repository) Session(ctx context.Context, fn func(session domain.Storage)
 		withTx, _ := r.q.WithTx(tx)
 		return fn(&Repository{q: withTx, c: tx})
 	})
+}
+
+type rowType FindByIDRow
+
+func rowToChat(row rowType) (*domain.Chat, error) {
+	chat := &domain.Chat{
+		ID:        row.ID,
+		ChatID:    row.ChatID,
+		CreatedAt: row.CreatedAt.Time,
+	}
+	if row.DeletedAt.Status == pgtype.Present {
+		chat.DeletedAt = &row.DeletedAt.Time
+	}
+
+	if row.CollegeGroup.Status == pgtype.Present {
+		g, err := scheduleapi.ParseGroup(row.CollegeGroup.String)
+		if err != nil {
+			return nil, errors.Wrap(err, "parse_group")
+		}
+		chat.Group = &g
+	}
+
+	return chat, nil
 }
