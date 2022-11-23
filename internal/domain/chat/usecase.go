@@ -32,6 +32,7 @@ type Usecase interface {
 
 type Storage interface {
 	Create(ctx context.Context, chatId int64) (CreateChatDTO, error)
+	FindByID(ctx context.Context, chatId int64) (*Chat, error)
 	FindByTelegramID(ctx context.Context, id int64) (*Chat, error)
 	UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
@@ -90,6 +91,17 @@ func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, e
 	}
 
 	return nil, StatusNone, err
+}
+
+func (s Service) ByID(ctx context.Context, chatId int64) (*Chat, error) {
+	chat, err := s.store.FindByID(ctx, chatId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "cannot find_by_id id=%d", chatId)
+	}
+	if chat.IsDeleted() {
+		return chat, ErrChatDeleted
+	}
+	return chat, nil
 }
 
 func (s Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
