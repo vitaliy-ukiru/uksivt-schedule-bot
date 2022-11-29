@@ -27,6 +27,8 @@ func (r Repository) Insert(ctx context.Context, cron scheduler.CronJobBase) (int
 }
 
 func (r Repository) FindForTime(ctx context.Context, at time.Time, periodRange time.Duration) ([]scheduler.CronJobBase, error) {
+	at = at.Round(time.Minute).In(time.UTC)
+
 	rows, err := r.q.FindAtTime(ctx, at, periodRange)
 	if err != nil {
 		return nil, err
