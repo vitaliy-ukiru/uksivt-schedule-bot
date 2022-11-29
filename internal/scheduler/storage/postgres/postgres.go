@@ -18,7 +18,7 @@ func NewRepository(conn Connection) *Repository {
 	return &Repository{q: NewQuerier(conn)}
 }
 
-func (r Repository) Insert(ctx context.Context, cron scheduler.CronJobBase) (int64, error) {
+func (r Repository) Insert(ctx context.Context, cron scheduler.CronJob) (int64, error) {
 	return r.q.CreateJob(ctx, CreateJobParams{
 		ChatID: cron.ChatID,
 		SendAt: cron.At,
@@ -26,7 +26,7 @@ func (r Repository) Insert(ctx context.Context, cron scheduler.CronJobBase) (int
 	})
 }
 
-func (r Repository) FindForTime(ctx context.Context, at time.Time, periodRange time.Duration) ([]scheduler.CronJobBase, error) {
+func (r Repository) FindForTime(ctx context.Context, at time.Time, periodRange time.Duration) ([]scheduler.CronJob, error) {
 	at = at.Round(time.Minute).In(time.UTC)
 
 	rows, err := r.q.FindAtTime(ctx, at, periodRange)
@@ -34,9 +34,9 @@ func (r Repository) FindForTime(ctx context.Context, at time.Time, periodRange t
 		return nil, err
 	}
 
-	result := make([]scheduler.CronJobBase, len(rows))
+	result := make([]scheduler.CronJob, len(rows))
 	for i, row := range rows {
-		result[i] = scheduler.CronJobBase{
+		result[i] = scheduler.CronJob{
 			ID:     row.ID,
 			At:     row.SendAt,
 			Flags:  scheduler.FlagSet(*row.Flags),

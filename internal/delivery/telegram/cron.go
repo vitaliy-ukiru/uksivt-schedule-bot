@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"go.uber.org/zap"
@@ -20,6 +21,11 @@ func (h Handler) CronJobSchedule() {
 	}
 
 	for _, cron := range crons {
+		c, err := h.uc.ByID(ctx, cron.ChatID)
+		if err != nil {
+			h.logger.Error("cannot get chat", zap.Error(err))
+		}
+
 		day := now
 		if cron.Flags.Has(scheduler.NextDay) {
 			forNextDay := 24 * time.Hour
@@ -31,25 +37,31 @@ func (h Handler) CronJobSchedule() {
 			day = day.Add(forNextDay)
 		}
 
-		lessons, err := h.uksivt.LessonsOneDay(ctx, *cron.Chat.Group, day)
+		lessons, err := h.uksivt.LessonsOneDay(ctx, *c.Group, day)
 		if err != nil {
 			h.logger.Error("cannot fetch lessons", zap.Error(err))
 			continue
 		}
 
-		chatId := tele.ChatID(cron.Chat.ID)
+		params := &cronParams{
+			Day:     day,
+			Lessons: lessons,
+			Cron:    cron,
+			Chat:    c,
+		}
 
 		switch {
+		case cron.Flags.Has(scheduler.FullOnlyIfReplaces):
+			go h.cronFullOnReplace(params)
+
+		case cron.Flags.HasAny(scheduler.ReplacesAlways, scheduler.OnlyIfHaveReplaces):
+			go h.cronReplaces(params)
+
 		case cron.Flags.Has(scheduler.Full):
 			go h.bot.Send(
-				chatId,
+				tele.ChatID(c.TgID),
 				lessonsToString(day, lessons),
 			)
-		case cron.Flags.HasAny(scheduler.ReplacesAlways, scheduler.OnlyIfHaveReplaces):
-			go h.cronReplaces(day, lessons, cron)
-
-		case cron.Flags.Has(scheduler.FullOnlyIfReplaces):
-			go h.cronFullOnReplace(day, lessons, cron)
 		}
 
 		h.logger.With(zap.Int64("cron_id", cron.ID)).Debug("cron handled")
@@ -59,10 +71,17 @@ func (h Handler) CronJobSchedule() {
 
 }
 
-func (h Handler) cronFullOnReplace(day time.Time, lessons []scheduleapi.Lesson, cron scheduler.CronJob) error {
+type cronParams struct {
+	Day     time.Time
+	Lessons []scheduleapi.Lesson
+	Cron    scheduler.CronJob
+	Chat    *chat.Chat
+}
+
+func (h Handler) cronFullOnReplace(p *cronParams) error {
 	{
 		var hasRepl bool
-		for _, lesson := range lessons {
+		for _, lesson := range p.Lessons {
 			if lesson.Replacement {
 				hasRepl = true
 				break
@@ -74,33 +93,32 @@ func (h Handler) cronFullOnReplace(day time.Time, lessons []scheduleapi.Lesson, 
 		}
 	}
 
-	_, err := h.bot.Send(tele.ChatID(cron.Chat.ChatID), lessonsToString(day, lessons))
+	_, err := h.bot.Send(tele.ChatID(p.Chat.TgID), lessonsToString(p.Day, p.Lessons))
 	return err
 }
 
-func (h Handler) cronReplaces(day time.Time, lessons []scheduleapi.Lesson, cron scheduler.CronJob) error {
+func (h Handler) cronReplaces(p *cronParams) error {
 	var replaces []scheduleapi.Lesson
-	for _, lesson := range lessons {
+	for _, lesson := range p.Lessons {
 		if lesson.Replacement {
 			replaces = append(replaces, lesson)
 		}
 	}
 
-	if len(replaces) == 0 && cron.Flags.Has(scheduler.ReplacesAlways) {
-		_, err := h.bot.Send(
-			tele.ChatID(cron.Chat.ID),
-			fmt.Sprintf("Замен на %s не найдено", day.Format("02.01.2006")),
-		)
-		return err
-	}
-
 	if len(replaces) == 0 {
+		if p.Cron.Flags.Has(scheduler.ReplacesAlways) {
+			_, err := h.bot.Send(
+				tele.ChatID(p.Chat.TgID),
+				fmt.Sprintf("Замен на %s не найдено", p.Day.Format("02.01.2006")),
+			)
+			return err
+		}
 		return nil
 	}
 
 	_, err := h.bot.Send(
-		tele.ChatID(cron.Chat.ID),
-		lessonsToString(day, lessons),
+		tele.ChatID(p.Chat.TgID),
+		lessonsToString(p.Day, replaces),
 	)
 	return err
 }
