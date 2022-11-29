@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
-	domain "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	. "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
@@ -25,22 +25,22 @@ func NewRepository(conn Connection) *Repository {
 	return &Repository{q: NewQuerier(conn), c: conn}
 }
 
-func (r Repository) Create(ctx context.Context, chatId int64) (domain.CreateChatDTO, error) {
+func (r Repository) Create(ctx context.Context, chatId int64) (CreateChatDTO, error) {
 	chatRow, err := r.q.CreateChat(ctx, chatId)
 	if err != nil {
-		return domain.CreateChatDTO{}, errors.Wrap(err, "pg.create")
+		return CreateChatDTO{}, errors.Wrap(err, "pg.create")
 	}
 
-	return domain.CreateChatDTO{
+	return CreateChatDTO{
 		ID:        chatRow.ID,
 		CreatedAt: chatRow.CreatedAt.Time,
 	}, nil
 }
 
-func (r Repository) FindByID(ctx context.Context, chatId int64) (*domain.Chat, error) {
+func (r Repository) FindByID(ctx context.Context, chatId int64) (*Chat, error) {
 	row, err := r.q.FindByID(ctx, chatId)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, domain.ErrChatNotFound
+		return nil, ErrChatNotFound
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "pg.by_id")
@@ -49,11 +49,11 @@ func (r Repository) FindByID(ctx context.Context, chatId int64) (*domain.Chat, e
 	return chat, errors.Wrap(err, "pg.by_id.convert")
 }
 
-func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*domain.Chat, error) {
+func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, error) {
 	row, err := r.q.FindByTgID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, domain.ErrChatNotFound
+			return nil, ErrChatNotFound
 		}
 		return nil, errors.Wrap(err, "pg.by_tg")
 	}
@@ -95,12 +95,12 @@ func (r Repository) Delete(ctx context.Context, chatId int64) error {
 
 func checkRowsAffected(tag pgconn.CommandTag) (err error) {
 	if tag.RowsAffected() == 0 {
-		err = domain.ErrNotModified
+		err = ErrNotModified
 	}
 	return
 }
 
-func (r Repository) Session(ctx context.Context, fn func(session domain.Storage) error) error {
+func (r Repository) Session(ctx context.Context, fn func(session Storage) error) error {
 	return r.c.BeginFunc(ctx, func(tx pgx.Tx) error {
 		withTx, _ := r.q.WithTx(tx)
 		return fn(&Repository{q: withTx, c: tx})
@@ -109,10 +109,10 @@ func (r Repository) Session(ctx context.Context, fn func(session domain.Storage)
 
 type rowType FindByIDRow
 
-func rowToChat(row rowType) (*domain.Chat, error) {
-	chat := &domain.Chat{
+func rowToChat(row rowType) (*Chat, error) {
+	chat := &Chat{
 		ID:        row.ID,
-		ChatID:    row.ChatID,
+		TgID:      row.ChatID,
 		CreatedAt: row.CreatedAt.Time,
 	}
 	if row.DeletedAt.Status == pgtype.Present {

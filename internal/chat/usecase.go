@@ -55,7 +55,7 @@ func (s Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
 	}
 	return &Chat{
 		ID:        dto.ID,
-		ChatID:    tgId,
+		TgID:      tgId,
 		CreatedAt: dto.CreatedAt,
 	}, nil
 
