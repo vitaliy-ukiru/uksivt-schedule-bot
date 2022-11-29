@@ -23,6 +23,7 @@ type Config struct {
 	Schedule struct {
 		ApiURL string `yaml:"url"`
 	} `yaml:"schedule-api"`
+	TimeLocation string `env:"TIME_LOCATION" yaml:"time_location" env-default:"UTC"`
 }
 
 var cfg *Config
