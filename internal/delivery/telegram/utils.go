@@ -3,7 +3,7 @@ package telegram
 import (
 	"context"
 
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"go.uber.org/zap"
 )
 

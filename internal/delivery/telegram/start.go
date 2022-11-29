@@ -3,7 +3,7 @@ package telegram
 import (
 	"fmt"
 
-	pkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	pkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	tele "gopkg.in/telebot.v3"
 )
 
