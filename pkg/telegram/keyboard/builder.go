@@ -32,7 +32,9 @@ func (b *Builder) Add(buttons ...tele.Btn) *Builder {
 }
 
 func (b *Builder) Row(row tele.Row) *Builder {
-	copyRow := append(tele.Row(nil), row...)
+	copyRow := make(tele.Row, len(row))
+	copy(copyRow, row)
+
 	b.rows = append(b.rows, copyRow)
 	return b
 }
@@ -58,7 +60,12 @@ func (b *Builder) SplitAll(max ...int) *Builder {
 	if len(max) != 0 {
 		rowSize = max[0]
 	}
-	plain := make([]tele.Btn, 0, len(b.rows))
+	var total int
+	for _, row := range b.rows {
+		total += len(row)
+	}
+
+	plain := make([]tele.Btn, 0, total)
 	for _, row := range b.rows {
 		plain = append(plain, row...)
 	}
