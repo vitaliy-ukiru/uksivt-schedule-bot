@@ -3,9 +3,9 @@ package telegram
 import (
 	"github.com/go-co-op/gocron"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/groups"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/pkg/schedule"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
@@ -18,25 +18,30 @@ type Handler struct {
 	uc     chat.Usecase
 	uksivt schedule.Usecase
 	groups groups.Service
+	crons  scheduler.CronFetcher
 
 	cfg    *config.Config
 	logger *zap.Logger
 	bot    *tele.Bot
-	crons  scheduler.CronFetcher
 }
 
 func NewHandler(
 	uc chat.Usecase,
 	uksivt schedule.Usecase,
 	groups groups.Service,
+	crons scheduler.CronFetcher,
+	cfg *config.Config,
 	logger *zap.Logger,
+	bot *tele.Bot,
 ) *Handler {
-
 	return &Handler{
 		uc:     uc,
 		uksivt: uksivt,
 		groups: groups,
+		cfg:    cfg,
 		logger: logger,
+		bot:    bot,
+		crons:  crons,
 	}
 }
 
@@ -66,8 +71,5 @@ func (h Handler) Route(m *fsm.Manager) {
 
 func (h Handler) Schedule(s *gocron.Scheduler) error {
 	_, err := s.Every(h.cfg.Telegram.SchedulerPeriod).Do(h.CronJobSchedule)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
