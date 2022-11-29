@@ -14,8 +14,8 @@ WHERE id = pggen.arg('ID');
 --name: FindAtTime :many
 SELECT id, chat_id, send_at, flags
 FROM scheduler_jobs
-WHERE send_at >= pggen.arg('At')::timetz - pggen.arg('Period')::interval
-  AND send_at <= pggen.arg('At')::timetz
+WHERE send_at >= pggen.arg('At')::time - pggen.arg('Period')::interval
+  AND send_at <= pggen.arg('At')::time
 ORDER BY id, send_at;
 
 --name: FindByChat :many

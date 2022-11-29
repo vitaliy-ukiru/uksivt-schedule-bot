@@ -278,8 +278,8 @@ func (q *DBQuerier) FindByIDScan(results pgx.BatchResults) (FindByIDRow, error) 
 
 const findAtTimeSQL = `SELECT id, chat_id, send_at, flags
 FROM scheduler_jobs
-WHERE send_at >= $1::timetz - $2::interval
-  AND send_at <= $1::timetz
+WHERE send_at >= $1::time - $2::interval
+  AND send_at <= $1::time
 ORDER BY id, send_at;`
 
 type FindAtTimeRow struct {

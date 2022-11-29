@@ -13,9 +13,9 @@ create table if not exists scheduler_jobs
 (
     id      bigserial
         primary key,
-    chat_id integer             not null
+    chat_id integer  not null
         constraint scheduler_jobs_chats_id_fk
             references chats,
-    send_at time with time zone not null,
-    flags   smallint            not null
+    send_at time     not null,
+    flags   smallint not null
 );
