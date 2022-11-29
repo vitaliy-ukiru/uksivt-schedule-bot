@@ -30,7 +30,7 @@ func main() {
 			"integer":  "int64",
 			"bigint":   "int64",
 			"text":     "github.com/jackc/pgtype.Text",
-			"timetz":   "time.Time",
+			"time":     "time.Time",
 			"interval": "time.Duration",
 		},
 	})
