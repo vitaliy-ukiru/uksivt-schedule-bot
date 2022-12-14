@@ -1,0 +1,12 @@
+schedule-api:
+   url: https://back.uksivt.com/api/v1
+telegram:
+   timeout: "2s"
+cron-scheduler:
+   cron: "30 * * * *"
+logger:
+   output:
+      paths: ["stdout"]
+      error-paths: ["stderr"]
+      format: "console"
+   level: "debug"

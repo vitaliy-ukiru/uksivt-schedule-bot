@@ -1,4 +1,0 @@
-schedule-api:
-   url: https://back.uksivt.com/api/v1
-telegram:
-   cron_period: 1m
