@@ -7,14 +7,14 @@ import (
 )
 
 type Lesson struct {
-	Group        string     `json:"college_group"`
-	DayOfWeek    int        `json:"day_of_week"`
-	LessonNumber int        `json:"lesson_number"`
-	Name         string     `json:"lesson"`
-	Teacher      string     `json:"teacher"`
-	LessonHall   string     `json:"lesson_hall"`
-	Replacement  bool       `json:"replacement"`
-	Time         LessonTime `json:"time"`
+	Group        string `json:"college_group"`
+	DayOfWeek    int    `json:"day_of_week"`
+	LessonNumber int    `json:"lesson_number"`
+	Name         string `json:"lesson"`
+	Teacher      string `json:"teacher"`
+	LessonHall   string `json:"lesson_hall"`
+	Replacement  bool   `json:"replacement"`
+	Time         string `json:"time"`
 }
 
 func (l Lesson) String() string {
@@ -34,7 +34,7 @@ func (l Lesson) StringReplacement(onReplacement string) string {
 		lesson,
 		l.Teacher,
 		l.LessonHall,
-		l.Time.StringJoin("\n  "),
+		l.Time,
 	)
 }
 

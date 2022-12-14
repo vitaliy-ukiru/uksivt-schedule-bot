@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"unsafe"
 )
 
 var reGroupPattern = regexp.MustCompile(`^(\d\d)([ЁёА-я]+)-(\d+)$`)
@@ -59,4 +60,8 @@ func ParseGroup(strGroup string) (g Group, err error) {
 	g.Spec = match[2]
 	return
 
+}
+
+func unsafeBytesToString(b []byte) string {
+	return *(*string)(unsafe.Pointer(&b))
 }
