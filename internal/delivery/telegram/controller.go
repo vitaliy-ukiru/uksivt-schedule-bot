@@ -70,6 +70,6 @@ func (h Handler) Route(m *fsm.Manager) {
 }
 
 func (h Handler) Schedule(s *gocron.Scheduler) error {
-	_, err := s.Every(h.cfg.Telegram.SchedulerPeriod).Do(h.CronJobSchedule)
+	_, err := s.Cron(h.cfg.Scheduler.Cron).Do(h.CronJobSchedule)
 	return err
 }
