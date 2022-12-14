@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,12 +19,28 @@ type Config struct {
 	} `yaml:"database"`
 	Telegram struct {
 		Token           string        `env:"BOT_TOKEN"`
-		SchedulerPeriod time.Duration `yaml:"cron_period" env:"PG_PORT" env-default:"1h"`
+		LongPollTimeout time.Duration `yaml:"timeout" env-default:"10s"`
 	}
-	Schedule struct {
+	UKSIVT struct {
 		ApiURL string `yaml:"url"`
 	} `yaml:"schedule-api"`
-	TimeLocation string `env:"TIME_LOCATION" yaml:"time_location" env-default:"UTC"`
+
+	Scheduler struct {
+		// Cron is expression for execute cron jobs
+		Cron string `yaml:"cron"`
+		// Range is period between time checks.
+		Range        time.Duration `yaml:"range" env-default:"30m"`
+		TimeLocation string        `env:"TIME_LOCATION" yaml:"time_location" env-default:"UTC"`
+	} `yaml:"cron-scheduler"`
+	Logger struct {
+		Output struct {
+			Format     string   `yaml:"format"`
+			Paths      []string `yaml:"paths"`
+			ErrorPaths []string `yaml:"error-paths"`
+		} `yaml:"output"`
+
+		Level zap.AtomicLevel `yaml:"level" env-default:"info"`
+	} `yaml:"logger"`
 }
 
 var cfg *Config
