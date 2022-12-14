@@ -5,10 +5,11 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
-	"time"
 )
 
 // Querier is a typesafe Go interface backed by SQL queries.

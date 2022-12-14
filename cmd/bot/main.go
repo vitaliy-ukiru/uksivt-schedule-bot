@@ -11,7 +11,7 @@ import (
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/fsm-telebot/storages/memory"
 	chatPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/storage/chat/postgres"
-	cronPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/storage/chat/sheduler/postgres"
+	cronPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/storage/scheduler/postgres"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram"
