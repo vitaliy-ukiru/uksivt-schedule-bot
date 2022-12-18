@@ -1,7 +1,7 @@
 ```
 ├── adapters
 │   ├── groups - "Service" for get college groups
-|   ├── storage/{domain} - Implementations storages for services
+|   ├── dao/{domain} - Implementations storages for services
 │   └── schedule - Abstract adapter pkg/schedule-api
 ├── chat - Chat's domain.
 ├── scheduler - Scheduler's domain.
