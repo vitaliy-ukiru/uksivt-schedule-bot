@@ -10,14 +10,19 @@ type CronFetcher interface {
 }
 
 type Usecase interface {
-	Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error)
 	CronFetcher
+	Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error)
 	Delete(ctx context.Context, id int64) error
 }
 
 type Storage interface {
 	Insert(ctx context.Context, base CronJob) (int64, error)
-	FindForTime(ctx context.Context, at time.Time, periodRange time.Duration) ([]CronJob, error)
+
+	FindInPeriod(ctx context.Context, at time.Time, periodRange time.Duration) ([]CronJob, error)
+	FindAtTime(ctx context.Context, at time.Time) ([]CronJob, error)
+	FindByChat(ctx context.Context, chatId int64) ([]CronJob, error)
+
+	Update(ctx context.Context, job CronJob) error
 	Delete(ctx context.Context, cronId int64) error
 }
 
@@ -46,14 +51,23 @@ func (s Service) Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error)
 }
 
 func (s Service) At(ctx context.Context, t time.Time) ([]CronJob, error) {
-	crons, err := s.store.FindForTime(ctx, t, s.period)
+	crons, err := s.store.FindAtTime(ctx, t)
 	if err != nil {
 		return nil, err
 	}
 
 	return crons, nil
-
 }
+
+func (s Service) InPeriod(ctx context.Context, t time.Time) ([]CronJob, error) {
+	crons, err := s.store.FindInPeriod(ctx, t, s.period)
+	if err != nil {
+		return nil, err
+	}
+
+	return crons, nil
+}
+
 func (s Service) Delete(ctx context.Context, id int64) error {
 	return s.store.Delete(ctx, id)
 }

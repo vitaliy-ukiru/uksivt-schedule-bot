@@ -5,11 +5,10 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
+	"time"
 )
 
 // Querier is a typesafe Go interface backed by SQL queries.
@@ -32,12 +31,12 @@ type Querier interface {
 	// FindByIDScan scans the result of an executed FindByIDBatch query.
 	FindByIDScan(results pgx.BatchResults) (FindByIDRow, error)
 
-	FindAtTime(ctx context.Context, at time.Time, period time.Duration) ([]FindAtTimeRow, error)
-	// FindAtTimeBatch enqueues a FindAtTime query into batch to be executed
+	FindInPeriod(ctx context.Context, at time.Time, period time.Duration) ([]FindInPeriodRow, error)
+	// FindInPeriodBatch enqueues a FindInPeriod query into batch to be executed
 	// later by the batch.
-	FindAtTimeBatch(batch genericBatch, at time.Time, period time.Duration)
-	// FindAtTimeScan scans the result of an executed FindAtTimeBatch query.
-	FindAtTimeScan(results pgx.BatchResults) ([]FindAtTimeRow, error)
+	FindInPeriodBatch(batch genericBatch, at time.Time, period time.Duration)
+	// FindInPeriodScan scans the result of an executed FindInPeriodBatch query.
+	FindInPeriodScan(results pgx.BatchResults) ([]FindInPeriodRow, error)
 
 	FindByChat(ctx context.Context, chatID int64) ([]FindByChatRow, error)
 	// FindByChatBatch enqueues a FindByChat query into batch to be executed
@@ -45,6 +44,13 @@ type Querier interface {
 	FindByChatBatch(batch genericBatch, chatID int64)
 	// FindByChatScan scans the result of an executed FindByChatBatch query.
 	FindByChatScan(results pgx.BatchResults) ([]FindByChatRow, error)
+
+	FindAtTime(ctx context.Context, at time.Time) ([]FindAtTimeRow, error)
+	// FindAtTimeBatch enqueues a FindAtTime query into batch to be executed
+	// later by the batch.
+	FindAtTimeBatch(batch genericBatch, at time.Time)
+	// FindAtTimeScan scans the result of an executed FindAtTimeBatch query.
+	FindAtTimeScan(results pgx.BatchResults) ([]FindAtTimeRow, error)
 
 	UpdateTime(ctx context.Context, sendAt time.Time, id int64) (pgconn.CommandTag, error)
 	// UpdateTimeBatch enqueues a UpdateTime query into batch to be executed
@@ -149,11 +155,14 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, findByIDSQL, findByIDSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindByID': %w", err)
 	}
-	if _, err := p.Prepare(ctx, findAtTimeSQL, findAtTimeSQL); err != nil {
-		return fmt.Errorf("prepare query 'FindAtTime': %w", err)
+	if _, err := p.Prepare(ctx, findInPeriodSQL, findInPeriodSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindInPeriod': %w", err)
 	}
 	if _, err := p.Prepare(ctx, findByChatSQL, findByChatSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindByChat': %w", err)
+	}
+	if _, err := p.Prepare(ctx, findAtTimeSQL, findAtTimeSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindAtTime': %w", err)
 	}
 	if _, err := p.Prepare(ctx, updateTimeSQL, updateTimeSQL); err != nil {
 		return fmt.Errorf("prepare query 'UpdateTime': %w", err)
@@ -202,7 +211,7 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const createJobSQL = `INSERT INTO scheduler_jobs(chat_id, send_at, flags)
+const createJobSQL = `INSERT INTO crons(chat_id, send_at, flags)
 VALUES ($1,
         $2,
         $3)
@@ -241,7 +250,7 @@ func (q *DBQuerier) CreateJobScan(results pgx.BatchResults) (int64, error) {
 }
 
 const findByIDSQL = `SELECT id, chat_id, send_at, flags
-FROM scheduler_jobs
+FROM crons
 WHERE id = $1;`
 
 type FindByIDRow struct {
@@ -277,69 +286,69 @@ func (q *DBQuerier) FindByIDScan(results pgx.BatchResults) (FindByIDRow, error) 
 	return item, nil
 }
 
-const findAtTimeSQL = `SELECT id, chat_id, send_at, flags
-FROM scheduler_jobs
-WHERE send_at >= $1::time - $2::interval
+const findInPeriodSQL = `SELECT id, chat_id, send_at, flags
+FROM crons
+WHERE send_at > $1::time - $2::interval
   AND send_at <= $1::time
 ORDER BY id, send_at;`
 
-type FindAtTimeRow struct {
+type FindInPeriodRow struct {
 	ID     int64     `json:"id"`
 	ChatID int64     `json:"chat_id"`
 	SendAt time.Time `json:"send_at"`
 	Flags  *int16    `json:"flags"`
 }
 
-// FindAtTime implements Querier.FindAtTime.
-func (q *DBQuerier) FindAtTime(ctx context.Context, at time.Time, period time.Duration) ([]FindAtTimeRow, error) {
-	ctx = context.WithValue(ctx, "pggen_query_name", "FindAtTime")
-	rows, err := q.conn.Query(ctx, findAtTimeSQL, at, period)
+// FindInPeriod implements Querier.FindInPeriod.
+func (q *DBQuerier) FindInPeriod(ctx context.Context, at time.Time, period time.Duration) ([]FindInPeriodRow, error) {
+	ctx = context.WithValue(ctx, "pggen_query_name", "FindInPeriod")
+	rows, err := q.conn.Query(ctx, findInPeriodSQL, at, period)
 	if err != nil {
-		return nil, fmt.Errorf("query FindAtTime: %w", err)
+		return nil, fmt.Errorf("query FindInPeriod: %w", err)
 	}
 	defer rows.Close()
-	items := []FindAtTimeRow{}
+	items := []FindInPeriodRow{}
 	for rows.Next() {
-		var item FindAtTimeRow
+		var item FindInPeriodRow
 		if err := rows.Scan(&item.ID, &item.ChatID, &item.SendAt, &item.Flags); err != nil {
-			return nil, fmt.Errorf("scan FindAtTime row: %w", err)
+			return nil, fmt.Errorf("scan FindInPeriod row: %w", err)
 		}
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("close FindAtTime rows: %w", err)
+		return nil, fmt.Errorf("close FindInPeriod rows: %w", err)
 	}
 	return items, err
 }
 
-// FindAtTimeBatch implements Querier.FindAtTimeBatch.
-func (q *DBQuerier) FindAtTimeBatch(batch genericBatch, at time.Time, period time.Duration) {
-	batch.Queue(findAtTimeSQL, at, period)
+// FindInPeriodBatch implements Querier.FindInPeriodBatch.
+func (q *DBQuerier) FindInPeriodBatch(batch genericBatch, at time.Time, period time.Duration) {
+	batch.Queue(findInPeriodSQL, at, period)
 }
 
-// FindAtTimeScan implements Querier.FindAtTimeScan.
-func (q *DBQuerier) FindAtTimeScan(results pgx.BatchResults) ([]FindAtTimeRow, error) {
+// FindInPeriodScan implements Querier.FindInPeriodScan.
+func (q *DBQuerier) FindInPeriodScan(results pgx.BatchResults) ([]FindInPeriodRow, error) {
 	rows, err := results.Query()
 	if err != nil {
-		return nil, fmt.Errorf("query FindAtTimeBatch: %w", err)
+		return nil, fmt.Errorf("query FindInPeriodBatch: %w", err)
 	}
 	defer rows.Close()
-	items := []FindAtTimeRow{}
+	items := []FindInPeriodRow{}
 	for rows.Next() {
-		var item FindAtTimeRow
+		var item FindInPeriodRow
 		if err := rows.Scan(&item.ID, &item.ChatID, &item.SendAt, &item.Flags); err != nil {
-			return nil, fmt.Errorf("scan FindAtTimeBatch row: %w", err)
+			return nil, fmt.Errorf("scan FindInPeriodBatch row: %w", err)
 		}
 		items = append(items, item)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("close FindAtTimeBatch rows: %w", err)
+		return nil, fmt.Errorf("close FindInPeriodBatch rows: %w", err)
 	}
 	return items, err
 }
 
 const findByChatSQL = `SELECT id, chat_id, send_at, flags
-FROM scheduler_jobs
+FROM crons
 WHERE chat_id = $1
 ORDER BY id;`
 
@@ -398,7 +407,67 @@ func (q *DBQuerier) FindByChatScan(results pgx.BatchResults) ([]FindByChatRow, e
 	return items, err
 }
 
-const updateTimeSQL = `UPDATE scheduler_jobs
+const findAtTimeSQL = `SELECT id, chat_id, send_at, flags
+FROM crons
+WHERE send_at = $1::time
+ORDER BY id, send_at;`
+
+type FindAtTimeRow struct {
+	ID     int64     `json:"id"`
+	ChatID int64     `json:"chat_id"`
+	SendAt time.Time `json:"send_at"`
+	Flags  *int16    `json:"flags"`
+}
+
+// FindAtTime implements Querier.FindAtTime.
+func (q *DBQuerier) FindAtTime(ctx context.Context, at time.Time) ([]FindAtTimeRow, error) {
+	ctx = context.WithValue(ctx, "pggen_query_name", "FindAtTime")
+	rows, err := q.conn.Query(ctx, findAtTimeSQL, at)
+	if err != nil {
+		return nil, fmt.Errorf("query FindAtTime: %w", err)
+	}
+	defer rows.Close()
+	items := []FindAtTimeRow{}
+	for rows.Next() {
+		var item FindAtTimeRow
+		if err := rows.Scan(&item.ID, &item.ChatID, &item.SendAt, &item.Flags); err != nil {
+			return nil, fmt.Errorf("scan FindAtTime row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close FindAtTime rows: %w", err)
+	}
+	return items, err
+}
+
+// FindAtTimeBatch implements Querier.FindAtTimeBatch.
+func (q *DBQuerier) FindAtTimeBatch(batch genericBatch, at time.Time) {
+	batch.Queue(findAtTimeSQL, at)
+}
+
+// FindAtTimeScan implements Querier.FindAtTimeScan.
+func (q *DBQuerier) FindAtTimeScan(results pgx.BatchResults) ([]FindAtTimeRow, error) {
+	rows, err := results.Query()
+	if err != nil {
+		return nil, fmt.Errorf("query FindAtTimeBatch: %w", err)
+	}
+	defer rows.Close()
+	items := []FindAtTimeRow{}
+	for rows.Next() {
+		var item FindAtTimeRow
+		if err := rows.Scan(&item.ID, &item.ChatID, &item.SendAt, &item.Flags); err != nil {
+			return nil, fmt.Errorf("scan FindAtTimeBatch row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close FindAtTimeBatch rows: %w", err)
+	}
+	return items, err
+}
+
+const updateTimeSQL = `UPDATE crons
 SET send_at = $1
 WHERE id = $2;`
 
@@ -426,7 +495,7 @@ func (q *DBQuerier) UpdateTimeScan(results pgx.BatchResults) (pgconn.CommandTag,
 	return cmdTag, err
 }
 
-const updateFlagsSQL = `UPDATE scheduler_jobs
+const updateFlagsSQL = `UPDATE crons
 SET flags = $1
 WHERE id = $2;`
 
@@ -455,7 +524,7 @@ func (q *DBQuerier) UpdateFlagsScan(results pgx.BatchResults) (pgconn.CommandTag
 }
 
 const deleteSQL = `DELETE
-FROM scheduler_jobs
+FROM crons
 WHERE id = $1;`
 
 // Delete implements Querier.Delete.

@@ -15,10 +15,10 @@ const (
 )
 
 type CronJob struct {
-	ID     int64     `json:"id"`
-	At     time.Time `json:"at"`
-	Flags  FlagSet   `json:"flags,omitempty"`
-	ChatID int64     `json:"chat_id"`
+	ID     int64     `json:"id" mapstructure:"-"`
+	ChatID int64     `json:"chat_id" mapstructure:"-"`
+	At     time.Time `json:"at" mapstructure:"at,omitempty"`
+	Flags  FlagSet   `json:"flags,omitempty" mapstructure:"flags,omitempty"`
 }
 
 func (f FlagSet) Has(b FlagSet) bool {
