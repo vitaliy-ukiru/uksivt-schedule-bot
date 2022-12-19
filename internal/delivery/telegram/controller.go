@@ -62,6 +62,13 @@ func (h Handler) Route(m *fsm.Manager) {
 		return c.Send(state.State().String())
 	})
 
+	m.Group().Handle("/cron", func(c tele.Context) error {
+		if c.Sender().ID == h.cfg.Telegram.AdminID {
+			h.CronJobSchedule()
+		}
+		return nil
+	})
+
 	m.Bind("/group", fsm.DefaultState, h.GetGroupCommand)
 	m.Bind("/lessons", fsm.DefaultState, h.ScheduleCommand)
 	keyboards.
