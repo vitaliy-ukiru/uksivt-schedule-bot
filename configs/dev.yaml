@@ -7,6 +7,6 @@ cron-scheduler:
 logger:
    output:
       paths: ["stdout"]
-      error-paths: ["stderr"]
+      error-paths: ["stdout"]
       format: "console"
    level: "debug"
