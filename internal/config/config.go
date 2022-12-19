@@ -19,6 +19,7 @@ type Config struct {
 	} `yaml:"database"`
 	Telegram struct {
 		Token           string        `env:"BOT_TOKEN"`
+		AdminID         int64         `yaml:"admin-id" env:"ADMIN_ID"`
 		LongPollTimeout time.Duration `yaml:"timeout" env-default:"10s"`
 	}
 	UKSIVT struct {
