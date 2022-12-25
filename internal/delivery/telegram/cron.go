@@ -14,16 +14,20 @@ import (
 
 func (h Handler) CronJobSchedule() {
 	now := time.Now()
+	h.logger.Info("start cron job")
 	ctx := context.TODO()
 	crons, err := h.crons.At(ctx, now)
 	if err != nil {
 		h.logger.With(zap.Error(err)).Error("cannot fetch crons")
 	}
+	h.logger.Debug("crons fetched", zap.Int("count", len(crons)))
 
 	for _, cron := range crons {
+		logger := h.logger.With(zap.Int64("cron_id", cron.ID))
+		logger.Debug("starting cron", zap.Int64("cron_id", cron.ID))
 		c, err := h.uc.ByID(ctx, cron.ChatID)
 		if err != nil {
-			h.logger.Error("cannot get chat", zap.Error(err))
+			logger.Error("cannot get chat", zap.Error(err))
 		}
 
 		day := now
@@ -39,7 +43,7 @@ func (h Handler) CronJobSchedule() {
 
 		lessons, err := h.uksivt.LessonsOneDay(ctx, *c.Group, day)
 		if err != nil {
-			h.logger.Error("cannot fetch lessons", zap.Error(err))
+			logger.Error("cannot fetch lessons", zap.Error(err))
 			continue
 		}
 
@@ -50,23 +54,45 @@ func (h Handler) CronJobSchedule() {
 			Chat:    c,
 		}
 
+		errChan := make(chan error)
+
 		switch {
 		case cron.Flags.Has(scheduler.FullOnlyIfReplaces):
-			go h.cronFullOnReplace(params)
+			go func() {
+				errChan <- h.cronFullOnReplace(params)
+			}()
 
-		case cron.Flags.HasAny(scheduler.ReplacesAlways, scheduler.OnlyIfHaveReplaces):
-			go h.cronReplaces(params)
+		case
+			cron.Flags.Has(scheduler.ReplacesAlways),
+			cron.Flags.Has(scheduler.OnlyIfHaveReplaces):
+
+			go func() {
+				errChan <- h.cronReplaces(params)
+			}()
 
 		case cron.Flags.Has(scheduler.Full):
-			go h.bot.Send(
-				tele.ChatID(c.TgID),
-				lessonsToString(day, lessons),
-			)
+			go func() {
+				_, err := h.bot.Send(
+					tele.ChatID(c.TgID),
+					lessonsToString(day, lessons),
+				)
+				errChan <- err
+			}()
 		}
 
-		h.logger.With(zap.Int64("cron_id", cron.ID)).Debug("cron handled")
+		select {
+		case err := <-errChan:
+			if err != nil {
+				logger.Error(
+					"failed sending lessons for cron",
+					zap.Error(err),
+				)
+			}
 
-		//time.Sleep(300 * time.Millisecond)
+		case <-time.After(3 * time.Second):
+			logger.Warn("sending lessons for cron exceeded timeout")
+		}
+		logger.Debug("ended cron processing")
 	}
 
 }
