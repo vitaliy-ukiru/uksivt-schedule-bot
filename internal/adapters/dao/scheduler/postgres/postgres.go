@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgtype"
 	"github.com/mitchellh/mapstructure"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
 )
@@ -39,7 +40,7 @@ func (r Repository) FindInPeriod(ctx context.Context, at time.Time, periodRange 
 
 	result := make([]scheduler.CronJob, len(rows))
 	for i, row := range rows {
-		result[i] = rowToJob(cronRow(row))
+		result[i] = cronRow(row).ToDomain()
 	}
 	return result, nil
 }
@@ -54,7 +55,7 @@ func (r Repository) FindAtTime(ctx context.Context, at time.Time) ([]scheduler.C
 
 	result := make([]scheduler.CronJob, len(rows))
 	for i, row := range rows {
-		result[i] = rowToJob(cronRow(row))
+		result[i] = cronRow(row).ToDomain()
 	}
 	return result, nil
 }
@@ -67,7 +68,7 @@ func (r Repository) FindByChat(ctx context.Context, chatId int64) ([]scheduler.C
 
 	result := make([]scheduler.CronJob, len(rows))
 	for i, row := range rows {
-		result[i] = rowToJob(cronRow(row))
+		result[i] = cronRow(row).ToDomain()
 	}
 	return result, nil
 }
@@ -100,16 +101,18 @@ func (r Repository) Delete(ctx context.Context, cronId int64) error {
 }
 
 type cronRow struct {
-	ID     int64     `json:"id"`
-	ChatID int64     `json:"chat_id"`
-	SendAt time.Time `json:"send_at"`
-	Flags  *int16    `json:"flags"`
+	ID     int64
+	ChatID int64
+	Title  pgtype.Varchar
+	SendAt time.Time
+	Flags  *int16
 }
 
-func rowToJob(row cronRow) scheduler.CronJob {
+func (row cronRow) ToDomain() scheduler.CronJob {
 	return scheduler.CronJob{
 		ID:     row.ID,
 		At:     row.SendAt,
+		Title:  row.Title.String,
 		Flags:  scheduler.FlagSet(*row.Flags),
 		ChatID: row.ChatID,
 	}

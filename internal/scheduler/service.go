@@ -37,6 +37,7 @@ func NewService(store Storage, period time.Duration) *Service {
 
 func (s Service) Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error) {
 	job := CronJob{
+		Title:  dto.Title,
 		At:     dto.At,
 		Flags:  FlagSet(dto.Flags),
 		ChatID: dto.ChatID,
