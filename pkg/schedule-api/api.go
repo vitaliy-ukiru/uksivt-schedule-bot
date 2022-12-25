@@ -3,7 +3,6 @@ package scheduleapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -63,13 +62,7 @@ func (c Client) Teachers(ctx context.Context) ([]string, error) {
 	return result, nil
 }
 
-var ErrInvalidWeekStart = errors.New("week start is not monday")
-
 func (c Client) Lessons(ctx context.Context, group Group, weekStart time.Time) (map[time.Weekday][]Lesson, error) {
-	if weekStart.Weekday() != time.Monday {
-		return nil, ErrInvalidWeekStart
-	}
-
 	local := weekStart.Format("2006-01-02")
 	path := fmt.Sprintf("%s/%s/from_date/%s", methodGetGroups, group.String(), local)
 	response := make(map[time.Weekday][]Lesson)
