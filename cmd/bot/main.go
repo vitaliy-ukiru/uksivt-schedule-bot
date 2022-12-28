@@ -8,11 +8,11 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/joho/godotenv"
-	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/fsm-telebot/storages/memory"
 	chatPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/dao/chat/postgres"
 	cronPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/dao/scheduler/postgres"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/groups"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/group"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
@@ -79,7 +79,7 @@ func main() {
 	}
 	log.Info("bot initialized", zap.String("bot_username", bot.Me.Username))
 
-	groupsService, err := groups.NewInMemoryFromFile(*groupsFilePath)
+	groupsService, err := group.NewInMemoryFromFile(*groupsFilePath)
 	if err != nil {
 		log.Fatal("cannot read groups file", zap.Error(err))
 	}
@@ -127,15 +127,14 @@ func main() {
 	)
 	log.Debug("cron services configured")
 
-	handler := telegram.NewHandler(
-		chatService,
-		uksivtSchedule,
-		groupsService,
-		cronService,
-		cfg,
-		log,
-		bot,
+	var (
+		groupsHandler  = telegram.NewGroupHandler(chatService, groupsService, log)
+		cronHandler    = telegram.NewCronHandler(chatService, cronService, log)
+		lessonsHandler = telegram.NewScheduleHandler(chatService, uksivtSchedule, cronService, log,
+			bot)
 	)
+
+	handler := telegram.New(chatService, groupsHandler, cronHandler, lessonsHandler, cfg, log, bot)
 
 	location, err := time.LoadLocation(cfg.Scheduler.TimeLocation)
 	if err != nil {
@@ -144,11 +143,11 @@ func main() {
 
 	cron := gocron.NewScheduler(location)
 	storage := memory.NewStorage()
-	m := fsm.NewManager(bot.Group(), storage)
+	m := fsm.NewManager(bot, nil, storage)
 
 	{
-		handler.Route(m)
-		if err := handler.Schedule(cron); err != nil {
+		handler.BindHandlers(m)
+		if err := handler.BindCrons(cron); err != nil {
 			log.Fatal("cannot schedule task", zap.Error(err))
 		}
 	}
