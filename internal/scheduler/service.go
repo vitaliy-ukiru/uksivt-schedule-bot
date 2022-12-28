@@ -5,13 +5,12 @@ import (
 	"time"
 )
 
-type CronFetcher interface {
-	At(ctx context.Context, t time.Time) ([]CronJob, error)
-}
-
 type Usecase interface {
-	CronFetcher
 	Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error)
+
+	At(ctx context.Context, t time.Time) ([]CronJob, error)
+	ForChat(ctx context.Context, chatId int64) ([]CronJob, error)
+
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -58,6 +57,11 @@ func (s Service) At(ctx context.Context, t time.Time) ([]CronJob, error) {
 	}
 
 	return crons, nil
+}
+
+func (s Service) ForChat(ctx context.Context, chatId int64) ([]CronJob, error) {
+	crons, err := s.store.FindByChat(ctx, chatId)
+	return crons, err
 }
 
 func (s Service) InPeriod(ctx context.Context, t time.Time) ([]CronJob, error) {
