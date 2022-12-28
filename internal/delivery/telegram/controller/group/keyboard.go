@@ -1,4 +1,4 @@
-package keyboards
+package group
 
 import (
 	"strconv"
@@ -10,12 +10,12 @@ import (
 const SGCallback = "select_g"
 
 var (
-	CancelBtn = keyboard.CallbackButton("Отмена", "select_g_cancel")
-	AcceptBtn = keyboard.CallbackButton("Подтвердить", "select_g_accept")
+	CancelBtn = keyboard.CallbackButton("Отмена", SGCallback+"_cancel")
+	AcceptBtn = keyboard.CallbackButton("Подтвердить", SGCallback+"_accept")
 	//BackBtn   = keyboard.CallbackButton("Назад", "select.g.back")
 )
 
-func SelectYear(years []int) *tele.ReplyMarkup {
+func SelectYearMarkup(years []int) *tele.ReplyMarkup {
 	b := keyboard.NewBuilder(1)
 	for _, year := range years {
 		yearStr := strconv.Itoa(year)
@@ -26,7 +26,7 @@ func SelectYear(years []int) *tele.ReplyMarkup {
 	return b.Inline()
 }
 
-func SelectSpec(year int, specs []string) *tele.ReplyMarkup {
+func SelectSpecMarkup(year int, specs []string) *tele.ReplyMarkup {
 	yearStr := strconv.Itoa(year)
 	const rowSize = 3.0
 	b := keyboard.NewBuilder(rowSize)
@@ -38,7 +38,7 @@ func SelectSpec(year int, specs []string) *tele.ReplyMarkup {
 	return b.Inline()
 }
 
-func SelectNumber(year int, spec string, numbers []int) *tele.ReplyMarkup {
+func SelectNumberMarkup(year int, spec string, numbers []int) *tele.ReplyMarkup {
 	groupStr := strconv.Itoa(year) + spec + "-"
 	b := keyboard.NewBuilder(1)
 	for _, number := range numbers {

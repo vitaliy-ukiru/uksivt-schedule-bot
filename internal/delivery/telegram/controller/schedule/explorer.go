@@ -1,4 +1,4 @@
-package telegram
+package schedule
 
 import (
 	"context"
@@ -8,26 +8,13 @@ import (
 
 	"github.com/ivahaev/russian-time"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/keyboards"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
 
 	tele "gopkg.in/telebot.v3"
 )
 
-func (h Handler) GetGroupCommand(c tele.Context, _ fsm.FSMContext) error {
-	chat := h.getChat(c.Chat().ID)
-	if chat == nil {
-		return c.Send("error: cannot get chat")
-	}
-	if chat.Group == nil {
-		return c.Send("Группа для чата не установлена")
-	}
-
-	return c.Send(fmt.Sprintf("Для чата выбрана группа %s", chat.Group.String()))
-}
-
-func (h Handler) ScheduleCommand(c tele.Context, _ fsm.FSMContext) error {
+func (h Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 	chat := h.getChat(c.Chat().ID)
 	if chat == nil {
 		return c.Send("error: cannot get chat")
@@ -35,8 +22,10 @@ func (h Handler) ScheduleCommand(c tele.Context, _ fsm.FSMContext) error {
 
 	payload := c.Data()
 	if chat.Group == nil && payload == "" {
-		return c.Send("Укажите группу через пробел после команды " +
-			"или установите её через /select_group")
+		return c.Send(
+			"Укажите группу через пробел после команды " +
+				"или установите её через /select_group",
+		)
 	}
 
 	var group scheduleapi.Group
@@ -48,8 +37,10 @@ func (h Handler) ScheduleCommand(c tele.Context, _ fsm.FSMContext) error {
 		var err error
 		group, err = scheduleapi.ParseGroup(c.Data())
 		if err != nil {
-			return c.Send("Не получилось достать группу из аргумента команды.\n" +
-				"Пример корректного ввода: 20П-1")
+			return c.Send(
+				"Не получилось достать группу из аргумента команды.\n" +
+					"Пример корректного ввода: 20П-1",
+			)
 		}
 	}
 	t := time.Now()
@@ -57,14 +48,15 @@ func (h Handler) ScheduleCommand(c tele.Context, _ fsm.FSMContext) error {
 	if err != nil {
 		return c.Send("error: " + err.Error())
 	}
-	return c.Send(lessonsToString(t, lessons), keyboards.ScheduleMarkup(t, group))
+	return c.Send(lessonsToString(t, lessons), ExplorerMarkup(t, group))
 }
 
-func (h Handler) ScheduleExplorerCallback(c tele.Context, data callback.M) error {
+func (h Handler) ExplorerCallback(c tele.Context, data callback.M) error {
 	day, err := time.Parse("2006-01-02", data["day"])
 	if err != nil {
 		return answerCallback(c, "invalid callback day", true)
 	}
+
 	group, err := scheduleapi.ParseGroup(data["g"])
 	if err != nil {
 		return answerCallback(c, "invalid callback group", true)
@@ -74,7 +66,8 @@ func (h Handler) ScheduleExplorerCallback(c tele.Context, data callback.M) error
 	if err != nil {
 		return answerCallback(c, "error: "+err.Error(), true)
 	}
-	return c.EditOrSend(lessonsToString(day, lessons), keyboards.ScheduleMarkup(day, group))
+
+	return c.EditOrSend(lessonsToString(day, lessons), ExplorerMarkup(day, group))
 
 }
 

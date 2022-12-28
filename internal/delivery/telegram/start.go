@@ -1,18 +1,26 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	pkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
+	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 func (h Handler) StartCommand(c tele.Context) error {
-	chat := h.getChat(c.Chat().ID)
-	if chat == nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	chat, status, err := h.uc.Lookup(ctx, c.Chat().ID)
+	if err != nil {
+		h.logger.Error("cannot get chat", zap.Error(err))
 		return c.Send("error: cannot get chat")
 	}
-	switch chat.Status {
+
+	switch status {
 	case pkg.StatusRestored:
 		return c.Send(fmt.Sprintf(
 			"Чат был удалён, возможно меня заблокировали. Но я восстановил данные.\n"+

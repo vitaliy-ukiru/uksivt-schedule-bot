@@ -1,4 +1,4 @@
-package telegram
+package schedule
 
 import (
 	"context"
@@ -12,20 +12,23 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func (h Handler) CronJobSchedule() {
+func (h Handler) CronSchedulerJob() {
 	now := time.Now()
 	h.logger.Info("start cron job")
-	ctx := context.TODO()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	crons, err := h.crons.At(ctx, now)
 	if err != nil {
 		h.logger.With(zap.Error(err)).Error("cannot fetch crons")
 	}
-	h.logger.Debug("crons fetched", zap.Int("count", len(crons)))
 
+	h.logger.Debug("crons fetched", zap.Int("count", len(crons)))
 	for _, cron := range crons {
 		logger := h.logger.With(zap.Int64("cron_id", cron.ID))
 		logger.Debug("starting cron", zap.Int64("cron_id", cron.ID))
-		c, err := h.uc.ByID(ctx, cron.ChatID)
+		c, err := h.chats.ByID(ctx, cron.ChatID)
 		if err != nil {
 			logger.Error("cannot get chat", zap.Error(err))
 		}
