@@ -191,7 +191,7 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const createJobSQL = `INSERT INTO crons(chat_id, title, send_at, flags)
+const createJobSQL = `INSERT INTO crons(chat_id, send_at, flags, title)
 VALUES ($1,
         $2,
         $3,
@@ -200,15 +200,15 @@ RETURNING id;`
 
 type CreateJobParams struct {
 	ChatID int64
-	Title  pgtype.Varchar
 	SendAt time.Time
-	Flags  int16
+	Flags  uint16
+	Title  pgtype.Varchar
 }
 
 // CreateJob implements Querier.CreateJob.
 func (q *DBQuerier) CreateJob(ctx context.Context, params CreateJobParams) (int64, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "CreateJob")
-	row := q.conn.QueryRow(ctx, createJobSQL, params.ChatID, params.Title, params.SendAt, params.Flags)
+	row := q.conn.QueryRow(ctx, createJobSQL, params.ChatID, params.SendAt, params.Flags, params.Title)
 	var item int64
 	if err := row.Scan(&item); err != nil {
 		return item, fmt.Errorf("query CreateJob: %w", err)
@@ -218,7 +218,7 @@ func (q *DBQuerier) CreateJob(ctx context.Context, params CreateJobParams) (int6
 
 // CreateJobBatch implements Querier.CreateJobBatch.
 func (q *DBQuerier) CreateJobBatch(batch genericBatch, params CreateJobParams) {
-	batch.Queue(createJobSQL, params.ChatID, params.Title, params.SendAt, params.Flags)
+	batch.Queue(createJobSQL, params.ChatID, params.SendAt, params.Flags, params.Title)
 }
 
 // CreateJobScan implements Querier.CreateJobScan.
@@ -240,7 +240,7 @@ type FindByIDRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  int16          `json:"flags"`
+	Flags  uint16         `json:"flags"`
 }
 
 // FindByID implements Querier.FindByID.
@@ -280,7 +280,7 @@ type FindInPeriodRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  *int16         `json:"flags"`
+	Flags  uint16         `json:"flags"`
 }
 
 // FindInPeriod implements Querier.FindInPeriod.
@@ -341,7 +341,7 @@ type FindByChatRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  *int16         `json:"flags"`
+	Flags  uint16         `json:"flags"`
 }
 
 // FindByChat implements Querier.FindByChat.
@@ -402,7 +402,7 @@ type FindAtTimeRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  *int16         `json:"flags"`
+	Flags  uint16         `json:"flags"`
 }
 
 // FindAtTime implements Querier.FindAtTime.

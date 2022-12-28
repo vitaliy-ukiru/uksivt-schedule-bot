@@ -1,9 +1,9 @@
 --name: CreateJob :one
-INSERT INTO crons(chat_id, title, send_at, flags)
+INSERT INTO crons(chat_id, send_at, flags, title)
 VALUES (pggen.arg('ChatID'),
-        pggen.arg('Title'),
         pggen.arg('SendAt'),
-        pggen.arg('Flags'))
+        pggen.arg('Flags'),
+        pggen.arg('Title'))
 RETURNING id;
 
 
