@@ -141,8 +141,8 @@ github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
-github.com/vitaliy-ukiru/fsm-telebot v1.0.0 h1:WB06eRvpOyMwXihTxE0+1zCj+SRPIXOHuUleafnHz6w=
-github.com/vitaliy-ukiru/fsm-telebot v1.0.0/go.mod h1:Z4E69tSVuZ4QOGAWeNSs/D+WrLaEKHR7GkdJitlV9Ag=
+github.com/vitaliy-ukiru/fsm-telebot v0.3.1 h1:PZJe/1IbFYB0by2kMwza3aHods6azDzav6n+Y6Pss/Y=
+github.com/vitaliy-ukiru/fsm-telebot v0.3.1/go.mod h1:M/y5bch6ZthSK376T1tGxr/GUnXWmozlkUDXBVz5naE=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 go.uber.org/atomic v1.3.2/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
 go.uber.org/atomic v1.4.0/go.mod h1:gD2HeocX3+yG+ygLZcrzQJaqmWj9AIm7n08wl/qW/PE=
