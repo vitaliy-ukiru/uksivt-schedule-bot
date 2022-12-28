@@ -43,3 +43,11 @@ func (f *FlagSet) Add(b FlagSet) {
 func (f *FlagSet) Unset(b FlagSet) {
 	*f &= ^b
 }
+
+func (f FlagSet) With(b FlagSet) FlagSet {
+	return f | b
+}
+
+func (f FlagSet) Without(b FlagSet) FlagSet {
+	return f & (^b)
+}
