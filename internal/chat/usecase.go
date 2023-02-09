@@ -85,11 +85,11 @@ func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, e
 		if err := s.store.RestoreFromDeleted(ctx, tgId); err != nil {
 			return nil, StatusNone, err
 		}
-		//TODO: add logs whet chat restored
+		//TODO: add logs when chat restored
 		chat.DeletedAt = nil
+
 		return chat, StatusRestored, nil
 	}
-
 	return nil, StatusNone, err
 }
 
