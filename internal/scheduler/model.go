@@ -18,7 +18,7 @@ type CronJob struct {
 	ID     int64     `json:"id" mapstructure:"-"`
 	ChatID int64     `json:"chat_id" mapstructure:"-"`
 	Title  string    `json:"title" mapstructure:"title,omitempty"`
-	At     time.Time `json:"at" mapstructure:"at,omitempty"`
+	At     time.Time `json:"at" mapstructure:"send_at,omitempty"`
 	Flags  FlagSet   `json:"flags,omitempty" mapstructure:"flags,omitempty"`
 }
 

@@ -128,13 +128,23 @@ func main() {
 	log.Debug("cron services configured")
 
 	var (
-		groupsHandler  = telegram.NewGroupHandler(chatService, groupsService, log)
-		cronHandler    = telegram.NewCronHandler(chatService, cronService, log)
-		lessonsHandler = telegram.NewScheduleHandler(chatService, uksivtSchedule, cronService, log,
+		groupsHandler     = telegram.NewGroupHandler(chatService, groupsService, log)
+		cronCreateHandler = telegram.NewCreateCronHandler(chatService, cronService, log)
+		cronEditHandler   = telegram.NewEditCronHandler(chatService, cronService, log)
+		lessonsHandler    = telegram.NewScheduleHandler(chatService, uksivtSchedule, cronService, log,
 			bot)
 	)
 
-	handler := telegram.New(chatService, groupsHandler, cronHandler, lessonsHandler, cfg, log, bot)
+	handler := telegram.New(
+		chatService,
+		groupsHandler,
+		cronCreateHandler,
+		cronEditHandler,
+		lessonsHandler,
+		cfg,
+		log,
+		bot,
+	)
 
 	location, err := time.LoadLocation(cfg.Scheduler.TimeLocation)
 	if err != nil {

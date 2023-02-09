@@ -8,7 +8,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func (h *Handler) ListCrons(c tele.Context) error {
+func (h *CreateCronHandler) ListCrons(c tele.Context) error {
 	chat, _, err := h.chats.Lookup(context.TODO(), c.Chat().ID)
 	if err != nil {
 		return err
@@ -19,6 +19,9 @@ func (h *Handler) ListCrons(c tele.Context) error {
 		return c.Send("error: " + err.Error() + fmt.Sprintf("\n\n%+v\n", err))
 	}
 
+	if len(crons) == 0 {
+		return c.Send("Нет задач.")
+	}
 	for _, cron := range crons {
 		err := c.Send(fmt.Sprintf(
 			"Title: %s\nAt:%s\nFlags:%s\n",

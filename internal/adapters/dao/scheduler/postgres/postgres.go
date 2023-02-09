@@ -22,7 +22,7 @@ func NewRepository(conn Connection) *Repository {
 	return &Repository{q: NewQuerier(conn), conn: conn}
 }
 
-func (r Repository) Insert(ctx context.Context, cron scheduler.CronJob) (int64, error) {
+func (r *Repository) Insert(ctx context.Context, cron scheduler.CronJob) (int64, error) {
 	return r.q.CreateJob(ctx, CreateJobParams{
 		ChatID: cron.ChatID,
 		SendAt: cron.At,
@@ -34,7 +34,7 @@ func (r Repository) Insert(ctx context.Context, cron scheduler.CronJob) (int64, 
 	})
 }
 
-func (r Repository) FindInPeriod(ctx context.Context, at time.Time, periodRange time.Duration) ([]scheduler.CronJob, error) {
+func (r *Repository) FindInPeriod(ctx context.Context, at time.Time, periodRange time.Duration) ([]scheduler.CronJob, error) {
 	at = at.Round(time.Minute)
 
 	rows, err := r.q.FindInPeriod(ctx, at, periodRange)
@@ -49,7 +49,7 @@ func (r Repository) FindInPeriod(ctx context.Context, at time.Time, periodRange 
 	return result, nil
 }
 
-func (r Repository) FindAtTime(ctx context.Context, at time.Time) ([]scheduler.CronJob, error) {
+func (r *Repository) FindAtTime(ctx context.Context, at time.Time) ([]scheduler.CronJob, error) {
 	at = at.Round(time.Minute)
 
 	rows, err := r.q.FindAtTime(ctx, at)
@@ -64,7 +64,7 @@ func (r Repository) FindAtTime(ctx context.Context, at time.Time) ([]scheduler.C
 	return result, nil
 }
 
-func (r Repository) FindByChat(ctx context.Context, chatId int64) ([]scheduler.CronJob, error) {
+func (r *Repository) FindByChat(ctx context.Context, chatId int64) ([]scheduler.CronJob, error) {
 	rows, err := r.q.FindByChat(ctx, chatId)
 	if err != nil {
 		return nil, err
@@ -77,12 +77,27 @@ func (r Repository) FindByChat(ctx context.Context, chatId int64) ([]scheduler.C
 	return result, nil
 }
 
+func (r *Repository) FindByID(ctx context.Context, chatId int64) (*scheduler.CronJob, error) {
+	row, err := r.q.FindByID(ctx, chatId)
+	if err != nil {
+		return nil, err
+	}
+	cron := cronRow(row).ToDomain()
+	return &cron, nil
+}
+
 const table = "crons"
 
-func (r Repository) Update(ctx context.Context, job scheduler.CronJob) error {
+func (r *Repository) Update(ctx context.Context, job scheduler.CronJob) error {
 	var fields map[string]any
+
 	if err := mapstructure.Decode(&job, &fields); err != nil {
 		return err
+	}
+	if job.At.IsZero() {
+		delete(fields, "send_at")
+	} else {
+		fields["send_at"] = job.At
 	}
 	sql, args, err := sq.
 		Update(table).
@@ -99,7 +114,7 @@ func (r Repository) Update(ctx context.Context, job scheduler.CronJob) error {
 	return err
 }
 
-func (r Repository) Delete(ctx context.Context, cronId int64) error {
+func (r *Repository) Delete(ctx context.Context, cronId int64) error {
 	_, err := r.q.Delete(ctx, cronId)
 	return err
 }

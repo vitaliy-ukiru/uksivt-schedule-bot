@@ -16,9 +16,10 @@ import (
 type Handler struct {
 	uc chat.Usecase
 
-	groups  *group.Handler
-	crons   *cron.Handler
-	lessons *schedule.Handler
+	groups      *group.Handler
+	cronsCreate *cron.CreateCronHandler
+	cronsEdit   *cron.EditCronHandler
+	lessons     *schedule.Handler
 
 	cfg    *config.Config
 	logger *zap.Logger
@@ -28,20 +29,22 @@ type Handler struct {
 func New(
 	uc chat.Usecase,
 	groups *group.Handler,
-	crons *cron.Handler,
+	cronsCreate *cron.CreateCronHandler,
+	cronsEdit *cron.EditCronHandler,
 	lessons *schedule.Handler,
 	cfg *config.Config,
 	logger *zap.Logger,
 	bot *tele.Bot,
 ) *Handler {
 	return &Handler{
-		uc:      uc,
-		groups:  groups,
-		crons:   crons,
-		lessons: lessons,
-		cfg:     cfg,
-		logger:  logger,
-		bot:     bot,
+		uc:          uc,
+		groups:      groups,
+		cronsCreate: cronsCreate,
+		cronsEdit:   cronsEdit,
+		lessons:     lessons,
+		cfg:         cfg,
+		logger:      logger,
+		bot:         bot,
 	}
 }
 
@@ -61,9 +64,10 @@ func (h Handler) BindHandlers(m *fsm.Manager) {
 	})
 
 	{
-		h.lessons.Bind(m.NewGroup())
-		h.crons.Bind(m.NewGroup())
+		h.lessons.Bind(m /*.NewGroup()*/)
+		h.cronsEdit.Bind(m /*.NewGroup()*/)
 		h.groups.Bind(m.NewGroup())
+		h.cronsCreate.Bind(m /*.NewGroup()*/)
 	}
 }
 

@@ -15,10 +15,10 @@ import (
 const SelectTimeText = "Выберите время для отправки: "
 
 var (
-	cronSG     = fsm.NewStateGroup("cc")
-	SelectOpt  = cronSG.New("opt")
-	InputTitle = cronSG.New("name")
-	AcceptCron = cronSG.New("accept")
+	createSG   = fsm.NewStateGroup("cc")
+	SelectOpt  = createSG.New("opt")
+	InputTitle = createSG.New("name")
+	AcceptCron = createSG.New("accept")
 )
 
 type Cron struct {
@@ -31,11 +31,11 @@ type Cron struct {
 	Step   *fsm.State // step uses for back jumping in steps
 }
 
-func (h *Handler) OnlyIssuerMiddleware(m *fsm.Manager) tele.MiddlewareFunc {
+func (h *CreateCronHandler) OnlyIssuerMiddleware(m *fsm.Manager) tele.MiddlewareFunc {
 	return func(next tele.HandlerFunc) tele.HandlerFunc {
 		return m.HandlerAdapter(func(c tele.Context, state fsm.Context) error {
 			s := state.State()
-			if !fsm.ContainsState(s, cronSG.States...) {
+			if !fsm.ContainsState(s, createSG.States...) {
 				return next(c)
 			}
 
@@ -53,23 +53,23 @@ func (h *Handler) OnlyIssuerMiddleware(m *fsm.Manager) tele.MiddlewareFunc {
 	}
 }
 
-func (h *Handler) Create(c tele.Context, _ fsm.Context) error {
+func (h *CreateCronHandler) CreateCommand(c tele.Context, _ fsm.Context) error {
 	markup := AMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
 	return c.Send(SelectTimeText, markup)
 }
 
-func (h *Handler) CallbackPM(c tele.Context) error {
+func (h *CreateCronHandler) PMCallback(c tele.Context) error {
 	markup := PMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
 	return c.EditOrSend(SelectTimeText, markup)
 }
 
-func (h *Handler) CallbackAM(c tele.Context) error {
+func (h *CreateCronHandler) AMCallback(c tele.Context) error {
 	markup := AMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
-	return c.Send(SelectTimeText, markup)
+	return c.EditOrSend(SelectTimeText, markup)
 }
 
-func (h *Handler) SelectTimeCallback(c tele.Context, state fsm.Context) error {
-	m, err := CreateCallback.MustFilter().Process(c)
+func (h *CreateCronHandler) SelectTimeCallback(c tele.Context, state fsm.Context) error {
+	m, err := SelectTimeCallback.MustFilter().Process(c)
 	if err != nil {
 		return answerCallback(c, "cannot parse data: "+err.Error(), true)
 	}
@@ -109,7 +109,7 @@ func sendFlagsMenu(c tele.Context, flags scheduler.FlagSet) error {
 	return c.EditOrSend(s, FlagsMarkup(flags))
 }
 
-func (h *Handler) FlagsCallback(c tele.Context, state fsm.Context) error {
+func (h *CreateCronHandler) FlagsCallback(c tele.Context, state fsm.Context) error {
 	cron := state.MustGet("cc").(*Cron)
 
 	callback := c.Callback().Data
@@ -129,7 +129,7 @@ func (h *Handler) FlagsCallback(c tele.Context, state fsm.Context) error {
 	return nil
 }
 
-func (h *Handler) AcceptFlagsCallback(c tele.Context, state fsm.Context) error {
+func (h *CreateCronHandler) AcceptFlagsCallback(c tele.Context, state fsm.Context) error {
 	cron := state.MustGet("cc").(*Cron)
 
 	if err := c.Edit("Отправьте название данной задачи"); err != nil {
@@ -140,7 +140,7 @@ func (h *Handler) AcceptFlagsCallback(c tele.Context, state fsm.Context) error {
 	return nil
 }
 
-func (h *Handler) InputTitle(c tele.Context, state fsm.Context) error {
+func (h *CreateCronHandler) InputTitle(c tele.Context, state fsm.Context) error {
 	cron := state.MustGet("cc").(*Cron)
 
 	title := c.Text()
@@ -163,7 +163,8 @@ func (h *Handler) InputTitle(c tele.Context, state fsm.Context) error {
 	return nil
 }
 
-func (h *Handler) AcceptCallback(c tele.Context, state fsm.Context) error {
+func (h *CreateCronHandler) AcceptCallback(c tele.Context, state fsm.Context) error {
+	go c.Respond()
 	cron := state.MustGet("cc").(*Cron)
 
 	chat, _, err := h.chats.Lookup(context.TODO(), c.Chat().ID)
@@ -181,6 +182,7 @@ func (h *Handler) AcceptCallback(c tele.Context, state fsm.Context) error {
 		h.logger.Error("cannot create cron", zap.Error(err))
 		return c.Send("Произошла ошибка: " + err.Error())
 	}
+	state.Finish(true)
 
 	return c.Send("Задача создана.")
 }
@@ -221,12 +223,12 @@ func flagString(flags scheduler.FlagSet, sep string) string {
 	return strings.Join(modes, sep)
 }
 
-func (h *Handler) BackBtnCallback(c tele.Context, state fsm.Context) error {
+func (h *CreateCronHandler) BackBtnCallback(c tele.Context, state fsm.Context) error {
 	cron := state.MustGet("cc").(*Cron)
 	switch *cron.Step {
 	case SelectOpt:
 		cron.Step = nil
-		return h.Create(c, state)
+		return h.CreateCommand(c, state)
 	case InputTitle:
 		cron.Step = &SelectOpt
 		return sendFlagsMenu(c, cron.Flags)

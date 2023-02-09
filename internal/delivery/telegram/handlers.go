@@ -12,10 +12,13 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func NewCronHandler(chats chat.Usecase, crons scheduler.Usecase, logger *zap.Logger) *cron.Handler {
-	return cron.New(chats, crons, logger)
+func NewCreateCronHandler(chats chat.Usecase, crons scheduler.Usecase, logger *zap.Logger) *cron.CreateCronHandler {
+	return cron.NewCreateHandler(chats, crons, logger)
 }
 
+func NewEditCronHandler(chats chat.Usecase, crons scheduler.Usecase, logger *zap.Logger) *cron.EditCronHandler {
+	return cron.NewEditHandler(chats, crons, logger)
+}
 func NewGroupHandler(chats chat.Usecase, groups group.Usecase, logger *zap.Logger) *selectGroup.Handler {
 	return selectGroup.New(chats, groups, logger)
 }

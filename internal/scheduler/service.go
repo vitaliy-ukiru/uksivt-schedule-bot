@@ -8,9 +8,11 @@ import (
 type Usecase interface {
 	Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error)
 
+	ByID(ctx context.Context, cronId int64) (*CronJob, error)
 	At(ctx context.Context, t time.Time) ([]CronJob, error)
 	ForChat(ctx context.Context, chatId int64) ([]CronJob, error)
 
+	Update(ctx context.Context, cron CronJob) error
 	Delete(ctx context.Context, id int64) error
 }
 
@@ -20,6 +22,8 @@ type Storage interface {
 	FindInPeriod(ctx context.Context, at time.Time, periodRange time.Duration) ([]CronJob, error)
 	FindAtTime(ctx context.Context, at time.Time) ([]CronJob, error)
 	FindByChat(ctx context.Context, chatId int64) ([]CronJob, error)
+
+	FindByID(ctx context.Context, cronId int64) (*CronJob, error)
 
 	Update(ctx context.Context, job CronJob) error
 	Delete(ctx context.Context, cronId int64) error
@@ -34,7 +38,7 @@ func NewService(store Storage, period time.Duration) *Service {
 	return &Service{store: store, period: period}
 }
 
-func (s Service) Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error) {
+func (s *Service) Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error) {
 	job := CronJob{
 		Title:  dto.Title,
 		At:     dto.At,
@@ -50,7 +54,11 @@ func (s Service) Create(ctx context.Context, dto CreateJobDTO) (*CronJob, error)
 	return &job, nil
 }
 
-func (s Service) At(ctx context.Context, t time.Time) ([]CronJob, error) {
+func (s *Service) ByID(ctx context.Context, cronId int64) (*CronJob, error) {
+	return s.store.FindByID(ctx, cronId)
+}
+
+func (s *Service) At(ctx context.Context, t time.Time) ([]CronJob, error) {
 	crons, err := s.store.FindAtTime(ctx, t)
 	if err != nil {
 		return nil, err
@@ -59,12 +67,12 @@ func (s Service) At(ctx context.Context, t time.Time) ([]CronJob, error) {
 	return crons, nil
 }
 
-func (s Service) ForChat(ctx context.Context, chatId int64) ([]CronJob, error) {
+func (s *Service) ForChat(ctx context.Context, chatId int64) ([]CronJob, error) {
 	crons, err := s.store.FindByChat(ctx, chatId)
 	return crons, err
 }
 
-func (s Service) InPeriod(ctx context.Context, t time.Time) ([]CronJob, error) {
+func (s *Service) InPeriod(ctx context.Context, t time.Time) ([]CronJob, error) {
 	crons, err := s.store.FindInPeriod(ctx, t, s.period)
 	if err != nil {
 		return nil, err
@@ -73,6 +81,10 @@ func (s Service) InPeriod(ctx context.Context, t time.Time) ([]CronJob, error) {
 	return crons, nil
 }
 
-func (s Service) Delete(ctx context.Context, id int64) error {
+func (s *Service) Update(ctx context.Context, cron CronJob) error {
+	return s.store.Update(ctx, cron)
+}
+
+func (s *Service) Delete(ctx context.Context, id int64) error {
 	return s.store.Delete(ctx, id)
 }
