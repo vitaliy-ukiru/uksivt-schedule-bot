@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-co-op/gocron"
@@ -62,9 +65,7 @@ func main() {
 		panic(err)
 	}
 	defer func() {
-		if err := log.Sync(); err != nil {
-			panic(err)
-		}
+		_ = log.Sync()
 	}()
 
 	bot, err := tele.NewBot(tele.Settings{
@@ -73,6 +74,22 @@ func main() {
 		Synchronous: false,
 		Verbose:     false,
 		ParseMode:   tele.ModeHTML,
+		OnError: func(err error, c tele.Context) {
+			log := log.With(zap.Error(err), zap.Int64("chat_id", c.Chat().ID))
+
+			//. //Error("error in handler")
+			{
+				update, errJson := json.Marshal(c.Update())
+				if errJson == nil {
+					log = log.With(zap.ByteString("update", update))
+				}
+
+				if handlerName := c.Get("handler"); handlerName != nil {
+					log = log.With(zap.Any("handler", handlerName))
+				}
+			}
+			log.Warn("in handler error")
+		},
 	})
 	if err != nil {
 		log.Fatal("cannot init Bot", zap.Error(err))
@@ -161,10 +178,26 @@ func main() {
 			log.Fatal("cannot schedule task", zap.Error(err))
 		}
 	}
-
 	{
 		log.Info("start listening")
 		cron.StartAsync()
-		bot.Start()
+		go bot.Start()
+	}
+	{
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit,
+			syscall.SIGINT,
+			syscall.SIGQUIT,
+			syscall.SIGKILL,
+			syscall.SIGTERM,
+		)
+		sig := <-quit
+		log.Warn("shutdown app", zap.String("signal", sig.String()))
+	}
+	{
+
+		cron.Stop()
+		bot.Stop()
+		log.Info("stopped bot")
 	}
 }
