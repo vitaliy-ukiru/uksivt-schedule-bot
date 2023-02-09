@@ -14,6 +14,10 @@ func NewBuilder(rowSize int) *Builder {
 	return &Builder{RowSize: rowSize}
 }
 
+func NewBuilderBuffer(rowSize int, rowsCapacity int) *Builder {
+	return &Builder{RowSize: rowSize, rows: make([]tele.Row, 0, rowsCapacity)}
+}
+
 func (b *Builder) Add(buttons ...tele.Btn) *Builder {
 	var row tele.Row
 	for i, btn := range buttons {
