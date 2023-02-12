@@ -8,7 +8,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func (h *CreateCronHandler) ListCrons(c tele.Context) error {
+func (h *EditCronHandler) ListCrons(c tele.Context) error {
 	chat, _, err := h.chats.Lookup(context.TODO(), c.Chat().ID)
 	if err != nil {
 		return err

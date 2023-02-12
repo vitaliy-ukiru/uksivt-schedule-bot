@@ -20,7 +20,6 @@ func NewCreateHandler(chats chat.Usecase, crons scheduler.Usecase, logger *zap.L
 
 func (h *CreateCronHandler) Bind(m *fsm.Manager) {
 	m.Bind("/create", fsm.DefaultState, h.CreateCommand)
-	m.Group().Handle("/crons", h.ListCrons)
 
 	m.Group().Handle(&PMButton, h.PMCallback)
 	m.Group().Handle(&AMButton, h.AMCallback)
@@ -35,6 +34,7 @@ func (h *CreateCronHandler) Bind(m *fsm.Manager) {
 
 func (h *EditCronHandler) Bind(m *fsm.Manager) {
 	m.Bind("/edit", fsm.DefaultState, h.EditCommand)
+	m.Group().Handle("/crons", h.ListCrons)
 	m.Bind(SelectCronEditCallback, fsm.DefaultState, h.EditSelectCronCallback)
 
 	m.Bind(&SelectEditTitle, SelectEditingField, h.EditTitleCallback)
