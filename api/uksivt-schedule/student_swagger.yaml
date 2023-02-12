@@ -75,6 +75,6 @@ components:
         time:
           type: string
           description: |
-            Time of lesson have format: (s{start_time} e{end_time})...
+            Time of lesson have format: (s{start_time(hh:mm)} e{end_time(hh:mm)})...
             This pair can be repeats. For example, valid value: s11:15 e12:00 s12:45 e13:30
           example: s7:50 e9:20
