@@ -25,7 +25,7 @@ func NewRepository(conn Connection) *Repository {
 	return &Repository{q: NewQuerier(conn), c: conn}
 }
 
-func (r Repository) Create(ctx context.Context, chatId int64) (CreateChatDTO, error) {
+func (r *Repository) Create(ctx context.Context, chatId int64) (CreateChatDTO, error) {
 	chatRow, err := r.q.CreateChat(ctx, chatId)
 	if err != nil {
 		return CreateChatDTO{}, errors.Wrap(err, "pg.create")
@@ -37,7 +37,7 @@ func (r Repository) Create(ctx context.Context, chatId int64) (CreateChatDTO, er
 	}, nil
 }
 
-func (r Repository) FindByID(ctx context.Context, chatId int64) (*Chat, error) {
+func (r *Repository) FindByID(ctx context.Context, chatId int64) (*Chat, error) {
 	row, err := r.q.FindByID(ctx, chatId)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrChatNotFound
@@ -49,7 +49,7 @@ func (r Repository) FindByID(ctx context.Context, chatId int64) (*Chat, error) {
 	return chat, errors.Wrap(err, "pg.by_id.convert")
 }
 
-func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, error) {
+func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, error) {
 	row, err := r.q.FindByTgID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -62,7 +62,7 @@ func (r Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, erro
 
 }
 
-func (r Repository) UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error {
+func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error {
 	g := pgtype.Text{
 		Status: pgtype.Null,
 	}
@@ -77,7 +77,7 @@ func (r Repository) UpdateChatGroup(ctx context.Context, id int64, group *schedu
 	return checkRowsAffected(tag)
 }
 
-func (r Repository) RestoreFromDeleted(ctx context.Context, id int64) error {
+func (r *Repository) RestoreFromDeleted(ctx context.Context, id int64) error {
 	tag, err := r.q.UndeleteChat(ctx, id)
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (r Repository) RestoreFromDeleted(ctx context.Context, id int64) error {
 	return checkRowsAffected(tag)
 }
 
-func (r Repository) Delete(ctx context.Context, chatId int64) error {
+func (r *Repository) Delete(ctx context.Context, chatId int64) error {
 	tag, err := r.q.Delete(ctx, chatId)
 	if err != nil {
 		return errors.Wrap(err, "pg.delete")
@@ -100,7 +100,7 @@ func checkRowsAffected(tag pgconn.CommandTag) (err error) {
 	return
 }
 
-func (r Repository) Session(ctx context.Context, fn func(session Storage) error) error {
+func (r *Repository) Session(ctx context.Context, fn func(session Storage) error) error {
 	return r.c.BeginFunc(ctx, func(tx pgx.Tx) error {
 		withTx, _ := r.q.WithTx(tx)
 		return fn(&Repository{q: withTx, c: tx})

@@ -48,7 +48,7 @@ func NewService(store Storage) *Service {
 	return &Service{store: store}
 }
 
-func (s Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
+func (s *Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
 	dto, err := s.store.Create(ctx, tgId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot create chat id=%d", tgId)
@@ -61,7 +61,7 @@ func (s Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
 
 }
 
-func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error) {
+func (s *Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error) {
 	chat, err := s.ByTelegramID(ctx, tgId)
 	if err == nil {
 		return chat, StatusFound, nil
@@ -93,7 +93,7 @@ func (s Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, e
 	return nil, StatusNone, err
 }
 
-func (s Service) ByID(ctx context.Context, chatId int64) (*Chat, error) {
+func (s *Service) ByID(ctx context.Context, chatId int64) (*Chat, error) {
 	chat, err := s.store.FindByID(ctx, chatId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find_by_id id=%d", chatId)
@@ -104,7 +104,7 @@ func (s Service) ByID(ctx context.Context, chatId int64) (*Chat, error) {
 	return chat, nil
 }
 
-func (s Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
+func (s *Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
 	chat, err := s.store.FindByTelegramID(ctx, chatTgId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find_by_tg chat=%d", chatTgId)
@@ -115,21 +115,21 @@ func (s Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error
 	return chat, nil
 }
 
-func (s Service) SetGroup(ctx context.Context, chatTgID int64, group scheduleapi.Group) error {
+func (s *Service) SetGroup(ctx context.Context, chatTgID int64, group scheduleapi.Group) error {
 	return errors.Wrapf(
 		s.store.UpdateChatGroup(ctx, chatTgID, &group),
 		"cannot set group chat=%d group=%+v", chatTgID, group,
 	)
 }
 
-func (s Service) ClearGroup(ctx context.Context, chatTgID int64) error {
+func (s *Service) ClearGroup(ctx context.Context, chatTgID int64) error {
 	return errors.Wrapf(
 		s.store.UpdateChatGroup(ctx, chatTgID, nil),
 		"cannot delete group chat=%d", chatTgID,
 	)
 }
 
-func (s Service) Restore(ctx context.Context, chatTgID int64) (*Chat, error) {
+func (s *Service) Restore(ctx context.Context, chatTgID int64) (*Chat, error) {
 	var chat *Chat
 	err := s.store.Session(ctx, func(store Storage) error {
 		var err error
@@ -144,11 +144,11 @@ func (s Service) Restore(ctx context.Context, chatTgID int64) (*Chat, error) {
 	return chat, err
 
 }
-func (s Service) withSession(session Storage) Service {
-	return Service{store: session}
+func (s *Service) withSession(session Storage) *Service {
+	return &Service{store: session}
 }
 
-func (s Service) Delete(ctx context.Context, chatTgID int64) error {
+func (s *Service) Delete(ctx context.Context, chatTgID int64) error {
 	return errors.Wrapf(
 		s.store.Delete(ctx, chatTgID),
 		"cannot delete chat=%d", chatTgID,
