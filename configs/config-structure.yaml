@@ -1,0 +1,63 @@
+$meta:
+  <topic_name_in_yaml>:
+    <param_name_in_yaml>:
+      type: description of type
+      env: [optional] name of env variable (more priority, than yaml)
+      default: default value
+      comment: [optional] additional info about param
+
+database:
+    user:  
+      type: string 
+      env: PG_USER
+    password:  
+      type: string 
+      env: PG_PASSWORD
+    database:  
+      type: string 
+      env: PG_DATABASE
+    host:  
+      type: string 
+      env: PG_HOST
+      default: localhost
+    port:  
+      type: int    
+      env: PG_PORT
+      default: 5432
+telegram:
+    BOT_TOKEN: ENV ONLY
+    admin-id: 
+      type: int64
+      env: ADMIN_ID
+    timeout:
+      type: duration (time.Duration)
+      default: 10 second
+schedule-api:
+  url:
+    type: string
+    comment: URL to API instance of github.com/mishapoiuytrewq/uksivt-schedule-backend
+cron-scheduler:
+  cron:
+    type: string (cron expression)
+    range: duration (time.Duration)
+    default: 30 minute
+    comment: period between records in database
+  time_location:
+    type: string (timezone)
+    env: TIME_LOCATION
+    default: UTC
+logger:
+  output:
+    format:
+      type: string
+      comment: console or json
+    paths:
+      type: array of string (filenames; stdout, stdin, stdout supported)
+      comment: paths to output logs
+    error-paths:
+      type: array of string (filename; stdout stdin stdout supported)
+      comment: paths to output logs with error level
+  level:
+    type: string (name of zap.AtomicLevel)
+    default: info
+
