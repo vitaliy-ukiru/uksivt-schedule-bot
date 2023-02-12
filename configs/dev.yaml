@@ -3,7 +3,7 @@ schedule-api:
 telegram:
    timeout: "2s"
 cron-scheduler:
-   cron: "*/30 * * * *"
+   cron: "* * * * *"
 logger:
    output:
       paths: ["stdout"]
