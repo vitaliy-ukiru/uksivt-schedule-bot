@@ -9,6 +9,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const MaxCrons = 5
+
 type Config struct {
 	Database struct {
 		User     string `yaml:"user" env:"PG_USER"`
