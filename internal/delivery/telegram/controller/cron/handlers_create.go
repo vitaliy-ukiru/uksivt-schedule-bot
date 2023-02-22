@@ -54,6 +54,32 @@ func (h *CreateCronHandler) OnlyIssuerMiddleware(m *fsm.Manager) tele.Middleware
 }
 
 func (h *CreateCronHandler) CreateCommand(c tele.Context, _ fsm.Context) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	chat, _, err := h.chats.Lookup(ctx, c.Chat().ID)
+	if err != nil {
+		h.logger.Error("cannot get chat", zap.Error(err))
+		return c.Send("Не могу получить информацию о чате. " +
+			"Попробуйте позже или сообщите разработчику (/help)")
+	}
+
+	if chat.Group == nil {
+		return c.Send("Нельзя создать программу пока не установлена группа для чата (/select_group)")
+	}
+
+	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	cronsCount, err := h.crons.CountInChat(ctx, chat.ID)
+	if err != nil {
+		h.logger.Error("cannot get count of crons", zap.Error(err))
+		return c.Send("Произошла ошибка. Попробуйте позже")
+	}
+
+	if cronsCount >= config.MaxCrons {
+		return c.Send("Нельзя создавать больше программ. Превышен лимит.")
+	}
+
 	markup := AMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
 	return c.Send(SelectTimeText, markup)
 }
