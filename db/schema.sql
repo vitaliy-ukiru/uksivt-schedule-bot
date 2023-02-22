@@ -1,3 +1,7 @@
+-- TODO PROPOSAL[GROUP_TYPE]: create table groups (id, year, spec, num)
+-- TODO PROPOSAL[GROUP_TYPE]: change column chats.college_group to coll_group_id (FK to groups.id)
+--TODO PROPOSAL[CHAT_PK]: delete column ID, use telegram id as PRIMARY KEY
+
 create table if not exists chats
 (
     id            serial

@@ -11,6 +11,8 @@ import (
 
 var reGroupPattern = regexp.MustCompile(`^(\d\d)([ЁёА-я]+)-(\d+)$`)
 
+// TODO PROPOSAL[GROUP_TYPE]  delete type scheduleapi.Group
+
 type Group struct {
 	Year   int    `json:"year"`
 	Number int    `json:"number"`

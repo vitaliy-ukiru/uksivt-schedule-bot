@@ -6,6 +6,9 @@ import (
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
+// TODO PROPOSAL[GROUP_TYPE]: change type of field Chat.Group to string
+// TODO PROPOSAL[CHAT_PK]: delete field ID, use telegram id as ID
+
 type Chat struct {
 	ID        int64              `json:"id"`
 	TgID      int64              `json:"tg_id"`
