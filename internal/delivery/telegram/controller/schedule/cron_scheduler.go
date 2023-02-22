@@ -12,7 +12,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func (h Handler) CronSchedulerJob() {
+func (h *Handler) CronSchedulerJob() {
 	now := time.Now()
 	h.logger.Info("start cron job")
 
@@ -91,7 +91,6 @@ func (h Handler) CronSchedulerJob() {
 					zap.Error(err),
 				)
 			}
-
 		case <-time.After(3 * time.Second):
 			logger.Warn("sending lessons for cron exceeded timeout")
 		}
@@ -107,7 +106,7 @@ type cronParams struct {
 	Chat    *chat.Chat
 }
 
-func (h Handler) cronFullOnReplace(p *cronParams) error {
+func (h *Handler) cronFullOnReplace(p *cronParams) error {
 	{
 		var hasRepl bool
 		for _, lesson := range p.Lessons {
@@ -126,8 +125,8 @@ func (h Handler) cronFullOnReplace(p *cronParams) error {
 	return err
 }
 
-func (h Handler) cronReplaces(p *cronParams) error {
-	var replaces []scheduleapi.Lesson
+func (h *Handler) cronReplaces(p *cronParams) error {
+	replaces := make([]scheduleapi.Lesson, len(p.Lessons)/2)
 	for _, lesson := range p.Lessons {
 		if lesson.Replacement {
 			replaces = append(replaces, lesson)

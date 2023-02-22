@@ -14,7 +14,7 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func (h Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
+func (h *Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 	chat := h.getChat(c.Chat().ID)
 	if chat == nil {
 		return c.Send("error: cannot get chat")
@@ -23,7 +23,7 @@ func (h Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 	payload := c.Data()
 	if chat.Group == nil && payload == "" {
 		return c.Send(
-			"Укажите группу через пробел после команды " +
+			"Укажите группу через пробел после команды (Пример: /lessons 20П-1)" +
 				"или установите её через /select_group",
 		)
 	}
@@ -51,7 +51,7 @@ func (h Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 	return c.Send(lessonsToString(t, lessons), ExplorerMarkup(t, group))
 }
 
-func (h Handler) ExplorerCallback(c tele.Context, data callback.M) error {
+func (h *Handler) ExplorerCallback(c tele.Context, data callback.M) error {
 	day, err := time.Parse("2006-01-02", data["day"])
 	if err != nil {
 		return answerCallback(c, "invalid callback day", true)

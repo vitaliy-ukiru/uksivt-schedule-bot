@@ -45,7 +45,7 @@ func (h *Handler) Bind(m *fsm.Manager) {
 	)
 }
 
-func (h Handler) getChat(tgID int64) *chat.Chat {
+func (h *Handler) getChat(tgID int64) *chat.Chat {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
