@@ -38,6 +38,13 @@ type Querier interface {
 	// FindInPeriodScan scans the result of an executed FindInPeriodBatch query.
 	FindInPeriodScan(results pgx.BatchResults) ([]FindInPeriodRow, error)
 
+	CountInChat(ctx context.Context, chatID int64) (int64, error)
+	// CountInChatBatch enqueues a CountInChat query into batch to be executed
+	// later by the batch.
+	CountInChatBatch(batch genericBatch, chatID int64)
+	// CountInChatScan scans the result of an executed CountInChatBatch query.
+	CountInChatScan(results pgx.BatchResults) (int64, error)
+
 	FindByChat(ctx context.Context, chatID int64) ([]FindByChatRow, error)
 	// FindByChatBatch enqueues a FindByChat query into batch to be executed
 	// later by the batch.
@@ -143,6 +150,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	}
 	if _, err := p.Prepare(ctx, findInPeriodSQL, findInPeriodSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindInPeriod': %w", err)
+	}
+	if _, err := p.Prepare(ctx, countInChatSQL, countInChatSQL); err != nil {
+		return fmt.Errorf("prepare query 'CountInChat': %w", err)
 	}
 	if _, err := p.Prepare(ctx, findByChatSQL, findByChatSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindByChat': %w", err)
@@ -329,6 +339,36 @@ func (q *DBQuerier) FindInPeriodScan(results pgx.BatchResults) ([]FindInPeriodRo
 		return nil, fmt.Errorf("close FindInPeriodBatch rows: %w", err)
 	}
 	return items, err
+}
+
+const countInChatSQL = `SELECT count(*)
+FROM crons
+WHERE chat_id = $1;`
+
+// CountInChat implements Querier.CountInChat.
+func (q *DBQuerier) CountInChat(ctx context.Context, chatID int64) (int64, error) {
+	ctx = context.WithValue(ctx, "pggen_query_name", "CountInChat")
+	row := q.conn.QueryRow(ctx, countInChatSQL, chatID)
+	var item int64
+	if err := row.Scan(&item); err != nil {
+		return item, fmt.Errorf("query CountInChat: %w", err)
+	}
+	return item, nil
+}
+
+// CountInChatBatch implements Querier.CountInChatBatch.
+func (q *DBQuerier) CountInChatBatch(batch genericBatch, chatID int64) {
+	batch.Queue(countInChatSQL, chatID)
+}
+
+// CountInChatScan implements Querier.CountInChatScan.
+func (q *DBQuerier) CountInChatScan(results pgx.BatchResults) (int64, error) {
+	row := results.QueryRow()
+	var item int64
+	if err := row.Scan(&item); err != nil {
+		return item, fmt.Errorf("scan CountInChatBatch row: %w", err)
+	}
+	return item, nil
 }
 
 const findByChatSQL = `SELECT id, chat_id, title, send_at, flags

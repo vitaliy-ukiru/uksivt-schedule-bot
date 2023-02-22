@@ -11,6 +11,7 @@ type Usecase interface {
 	ByID(ctx context.Context, cronId int64) (*CronJob, error)
 	At(ctx context.Context, t time.Time) ([]CronJob, error)
 	ForChat(ctx context.Context, chatId int64) ([]CronJob, error)
+	CountInChat(ctx context.Context, chatId int64) (int64, error)
 
 	Update(ctx context.Context, cron CronJob) error
 	Delete(ctx context.Context, id int64) error
@@ -22,7 +23,7 @@ type Storage interface {
 	FindInPeriod(ctx context.Context, at time.Time, periodRange time.Duration) ([]CronJob, error)
 	FindAtTime(ctx context.Context, at time.Time) ([]CronJob, error)
 	FindByChat(ctx context.Context, chatId int64) ([]CronJob, error)
-
+	CountInChat(ctx context.Context, chatId int64) (int64, error)
 	FindByID(ctx context.Context, cronId int64) (*CronJob, error)
 
 	Update(ctx context.Context, job CronJob) error
@@ -79,6 +80,10 @@ func (s *Service) InPeriod(ctx context.Context, t time.Time) ([]CronJob, error) 
 	}
 
 	return crons, nil
+}
+
+func (s *Service) CountInChat(ctx context.Context, chatId int64) (int64, error) {
+	return s.store.CountInChat(ctx, chatId)
 }
 
 func (s *Service) Update(ctx context.Context, cron CronJob) error {

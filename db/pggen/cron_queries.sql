@@ -19,6 +19,11 @@ WHERE send_at > pggen.arg('At')::time - pggen.arg('Period')::interval
   AND send_at <= pggen.arg('At')::time
 ORDER BY id, send_at;
 
+--name: CountInChat :one
+SELECT count(*)
+FROM crons
+WHERE chat_id = pggen.arg('ChatID');
+
 --name: FindByChat :many
 SELECT id, chat_id, title, send_at, flags
 FROM crons

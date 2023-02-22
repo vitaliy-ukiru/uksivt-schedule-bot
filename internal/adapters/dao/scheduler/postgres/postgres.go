@@ -61,6 +61,7 @@ func (r *Repository) FindAtTime(ctx context.Context, at time.Time) ([]scheduler.
 	for i, row := range rows {
 		result[i] = cronRow(row).ToDomain()
 	}
+
 	return result, nil
 }
 
@@ -84,6 +85,10 @@ func (r *Repository) FindByID(ctx context.Context, chatId int64) (*scheduler.Cro
 	}
 	cron := cronRow(row).ToDomain()
 	return &cron, nil
+}
+
+func (r *Repository) CountInChat(ctx context.Context, chatId int64) (int64, error) {
+	return r.q.CountInChat(ctx, chatId)
 }
 
 const table = "crons"
