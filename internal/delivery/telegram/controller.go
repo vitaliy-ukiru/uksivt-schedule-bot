@@ -48,10 +48,10 @@ func New(
 	}
 }
 
-func (h Handler) BindHandlers(m *fsm.Manager) {
-	m.Use(middleware.AutoRespond())
+func (h *Handler) BindHandlers(m *fsm.Manager) {
+	m.Group().Use(middleware.AutoRespond())
 	m.Group().Handle("/start", h.StartCommand)
-
+	m.Group().Handle("/help", h.HelpCommand)
 	m.Bind("/state", fsm.AnyState, func(c tele.Context, state fsm.Context) error {
 		return c.Send(state.State().String())
 	})
@@ -71,7 +71,7 @@ func (h Handler) BindHandlers(m *fsm.Manager) {
 	}
 }
 
-func (h Handler) BindCrons(s *gocron.Scheduler) error {
+func (h *Handler) BindCrons(s *gocron.Scheduler) error {
 	_, err := s.Cron(h.cfg.Scheduler.Cron).Do(h.lessons.CronSchedulerJob)
 	return err
 }
