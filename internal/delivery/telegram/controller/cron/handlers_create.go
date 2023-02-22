@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
@@ -80,17 +81,17 @@ func (h *CreateCronHandler) CreateCommand(c tele.Context, _ fsm.Context) error {
 		return c.Send("Нельзя создавать больше программ. Превышен лимит.")
 	}
 
-	markup := AMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
+	markup := TimesMarkupAM(c.Sender().Recipient(), 30*time.Minute)
 	return c.Send(SelectTimeText, markup)
 }
 
 func (h *CreateCronHandler) PMCallback(c tele.Context) error {
-	markup := PMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
+	markup := TimesMarkupPM(c.Sender().Recipient(), 30*time.Minute)
 	return c.EditOrSend(SelectTimeText, markup)
 }
 
 func (h *CreateCronHandler) AMCallback(c tele.Context) error {
-	markup := AMTimesMarkup(c.Sender().Recipient(), 30*time.Minute)
+	markup := TimesMarkupAM(c.Sender().Recipient(), 30*time.Minute)
 	return c.EditOrSend(SelectTimeText, markup)
 }
 

@@ -17,7 +17,7 @@ var (
 	AMButton = keyboard.CallbackButton("До полудня", "cron_c_am")
 )
 
-func AMTimesMarkup(userId string, period time.Duration) *tele.ReplyMarkup {
+func TimesMarkupAM(userId string, period time.Duration) *tele.ReplyMarkup {
 	b := keyboard.NewBuilder(4)
 	var t time.Time
 	for t.Hour() < 12 {
@@ -35,7 +35,7 @@ func AMTimesMarkup(userId string, period time.Duration) *tele.ReplyMarkup {
 	return b.Inline()
 }
 
-func PMTimesMarkup(userId string, period time.Duration) *tele.ReplyMarkup {
+func TimesMarkupPM(userId string, period time.Duration) *tele.ReplyMarkup {
 	b := keyboard.NewBuilder(4)
 
 	var t time.Time

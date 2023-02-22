@@ -33,12 +33,12 @@ var (
 
 func (h *EditCronHandler) EditCommand(c tele.Context, _ fsm.Context) error {
 	ctx := context.Background()
-	с, _, err := h.chats.Lookup(ctx, c.Chat().ID)
+	chatObj, _, err := h.chats.Lookup(ctx, c.Chat().ID)
 	if err != nil {
 		return c.Send(err.Error())
 	}
 
-	crons, err := h.crons.ForChat(ctx, с.ID)
+	crons, err := h.crons.ForChat(ctx, chatObj.ID)
 	if err != nil {
 		return c.Send("cannot get crons: " + err.Error())
 	}
@@ -86,7 +86,7 @@ func (h *EditCronHandler) EditTitleCallback(c tele.Context, state fsm.Context) e
 
 func (h *EditCronHandler) EditTimeCallback(c tele.Context, state fsm.Context) error {
 	state.Set(EditTime)
-	return c.Send(SelectTimeText, AMTimesMarkup(c.Sender().Recipient(), 30*time.Minute))
+	return c.Send(SelectTimeText, TimesMarkupAM(c.Sender().Recipient(), 30*time.Minute))
 }
 
 func (h *EditCronHandler) EditFlagsCallback(c tele.Context, state fsm.Context) error {
