@@ -78,17 +78,15 @@ func main() {
 			log := log.With(zap.Error(err), zap.Int64("chat_id", c.Chat().ID))
 
 			//. //Error("error in handler")
-			{
-				update, errJson := json.Marshal(c.Update())
-				if errJson == nil {
-					log = log.With(zap.ByteString("update", update))
-				}
 
-				if handlerName := c.Get("handler"); handlerName != nil {
-					log = log.With(zap.Any("handler", handlerName))
-				}
+			if handlerName := c.Get("handler"); handlerName != nil {
+				log = log.With(zap.Any("handler", handlerName))
 			}
 			log.Warn("in handler error")
+			update, errJson := json.Marshal(c.Update())
+			if errJson == nil {
+				log.Debug(string(update))
+			}
 		},
 	})
 	if err != nil {
