@@ -1,11 +1,10 @@
 -- TODO PROPOSAL[GROUP_TYPE]: create table groups (id, year, spec, num)
 -- TODO PROPOSAL[GROUP_TYPE]: change column chats.college_group to coll_group_id (FK to groups.id)
---TODO PROPOSAL[CHAT_PK]: delete column ID, use telegram id as PRIMARY KEY
+-- TODO PROPOSAL[CHAT_PK]: delete column ID, use telegram id as PRIMARY KEY
 
 create table if not exists chats
 (
-    id            serial
-        primary key,
+    id            bigint generated always as identity,
     chat_id       bigint                                 not null
         unique,
     college_group text,
@@ -15,7 +14,7 @@ create table if not exists chats
 
 create table if not exists crons
 (
-    id      bigserial
+    id      bigint generated always as identity
         primary key,
     chat_id integer      not null
         constraint crons_chats_id_fk
