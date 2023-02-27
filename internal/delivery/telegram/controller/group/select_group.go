@@ -7,6 +7,7 @@ import (
 
 	"github.com/vitaliy-ukiru/fsm-telebot"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
+	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
@@ -25,36 +26,55 @@ func (h *Handler) Command(c tele.Context, _ fsm.Context) error {
 	//	return c.Send("cannot get chat: " + err.Error())
 	//}
 	//state.Set(SelectYear)
-	markup := SelectYearMarkup(h.groups.Years())
+	ctx := context.TODO()
+	years, err := h.groups.Years(ctx)
+	if err != nil {
+		h.logger.Error("get years", zap.Error(err))
+		return c.Send("ERROR: cannot get groups(year): " + err.Error())
+	}
+	markup := SelectYearMarkup(years)
 	return c.Send("Выберите год поступления:", markup)
 }
 
 func (h *Handler) YearCallback(c tele.Context, state fsm.Context) error {
 	yearStr := c.Data()
-	year, _ := strconv.Atoi(yearStr)
-	//if err != nil {
-	//	return err
-	//}
+	year, err := strconv.Atoi(yearStr)
+	if err != nil {
+		h.logger.Error("invalid  year callback", zap.Error(err))
+		return c.Send("ERROR: parse year: " + err.Error())
+	}
 	state.Set(SelectSpecState)
 	_ = state.Update("g", scheduleapi.Group{Year: year})
-	specs := h.groups.Specs(year)
+	specs, err := h.groups.Specs(context.TODO(), year)
+	if err != nil {
+		h.logger.Error("get specs", zap.Error(err), zap.Int("year", year))
+		return c.Send("ERROR: cannot get groups(spec): " + err.Error())
+	}
 	markup := SelectSpecMarkup(year, specs)
 
 	return c.EditOrSend("Выберите специальность", markup)
 }
 
 func (h *Handler) SpecCallback(c tele.Context, state fsm.Context) error {
-	//year, ok := state.MustGet("year").(int)
+
 	g, ok := state.MustGet("g").(scheduleapi.Group)
 	if !ok {
 		_ = state.Finish(true)
-		return c.Send("invalid data, aborting")
+		return c.Send("ERROR: invalid data, aborting")
 	}
 	g.Spec = c.Data()
 
 	_ = state.Update("g", g)
 	state.Set(SelectNumberState)
-	numbers := h.groups.Numbers(g.Year, g.Spec)
+	numbers, err := h.groups.Numbers(context.TODO(), g.Year, g.Spec)
+	if err != nil {
+		h.logger.Error("get nums",
+			zap.Error(err),
+			zap.Int("year", g.Year),
+			zap.String("spec", g.Spec),
+		)
+		return c.Send("ERROR: cannot get groups(num): " + err.Error())
+	}
 	markup := SelectNumberMarkup(g.Year, g.Spec, numbers)
 	return c.EditOrSend("Выберите группу", markup)
 }

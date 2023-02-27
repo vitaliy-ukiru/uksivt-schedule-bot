@@ -1,6 +1,7 @@
 package group
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -12,38 +13,6 @@ import (
 type InMemoryService struct {
 	//        year       spec     num
 	groups map[int]map[string][]int
-}
-
-func (i InMemoryService) Years() []int {
-	years := make([]int, 0, len(i.groups))
-	for year := range i.groups {
-		years = append(years, year)
-	}
-	sort.Ints(years)
-	return years
-}
-
-func (i InMemoryService) Specs(year int) []string {
-	v, ok := i.groups[year]
-	if !ok {
-		return nil
-	}
-	specs := make([]string, 0, len(v))
-	for spec := range v {
-		specs = append(specs, spec)
-	}
-	sort.Strings(specs)
-	return specs
-}
-
-func (i InMemoryService) Numbers(year int, spec string) []int {
-	specs, ok := i.groups[year]
-	if !ok {
-		return nil
-	}
-	numbers := append([]int(nil), specs[spec]...)
-	sort.Ints(numbers)
-	return numbers
 }
 
 func NewInMemoryService(groups map[int]map[string][]int) *InMemoryService {
@@ -66,4 +35,38 @@ func NewInMemoryFromFile(path string) (*InMemoryService, error) {
 	}
 	defer file.Close()
 	return NewInMemoryFromReader(file)
+}
+
+func (i InMemoryService) Years(_ context.Context) ([]int, error) {
+	years := make([]int, 0, len(i.groups))
+	for year := range i.groups {
+		years = append(years, year)
+	}
+	sort.Ints(years)
+	return years, nil
+}
+
+var ErrNotFoundGroups = errors.New("groups not found")
+
+func (i InMemoryService) Specs(_ context.Context, year int) ([]string, error) {
+	v, ok := i.groups[year]
+	if !ok {
+		return nil, ErrNotFoundGroups
+	}
+	specs := make([]string, 0, len(v))
+	for spec := range v {
+		specs = append(specs, spec)
+	}
+	sort.Strings(specs)
+	return specs, nil
+}
+
+func (i InMemoryService) Numbers(_ context.Context, year int, spec string) ([]int, error) {
+	specs, ok := i.groups[year]
+	if !ok {
+		return nil, ErrNotFoundGroups
+	}
+	numbers := append([]int(nil), specs[spec]...)
+	sort.Ints(numbers)
+	return numbers, nil
 }

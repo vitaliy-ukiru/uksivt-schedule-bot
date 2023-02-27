@@ -29,8 +29,9 @@ import (
 
 var (
 	configPath     = flag.String("config", "./configs/app.yaml", "path to config file")
-	groupsFilePath = flag.String("groups", "./configs/groups.json", "path to groups.json")
 	envFilePath    = flag.String("env-file", "", "path to .env file")
+	groupsFilePath = flag.String("groups", "./configs/groups.json",
+		"path to groups.json. Use \"postgres\" for using PostgresSQL (before execute db/migration/groups.up.sql)")
 )
 
 func loadEnv(file string) error {
@@ -94,11 +95,6 @@ func main() {
 	}
 	log.Info("bot initialized", zap.String("bot_username", bot.Me.Username))
 
-	groupsService, err := group.NewInMemoryFromFile(*groupsFilePath)
-	if err != nil {
-		log.Fatal("cannot read groups file", zap.Error(err))
-	}
-
 	pool, err := pg.New(context.TODO(), pg.ConnString(
 		cfg.Database.User,
 		cfg.Database.Password,
@@ -122,6 +118,16 @@ func main() {
 			zap.String("user", poolCfg.User),
 		)
 
+	}
+
+	var groupsService group.Usecase
+	if *groupsFilePath == "postgres" {
+		groupsService = group.NewPostgresService(pool)
+	} else {
+		groupsService, err = group.NewInMemoryFromFile(*groupsFilePath)
+		if err != nil {
+			log.Fatal("cannot read groups file", zap.Error(err))
+		}
 	}
 
 	var (
