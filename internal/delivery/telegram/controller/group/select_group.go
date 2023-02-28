@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	//SelectYear   = groupSG.New("year")
 	groupSG = fsm.NewStateGroup("s.g")
 
 	SelectSpecState   = groupSG.New("spec")
@@ -21,11 +20,6 @@ var (
 )
 
 func (h *Handler) Command(c tele.Context, _ fsm.Context) error {
-	//chat, err := h.uc.ByTelegramID(context.TODO(), c.Chat().ID)
-	//if err != nil {
-	//	return c.Send("cannot get chat: " + err.Error())
-	//}
-	//state.Set(SelectYear)
 	ctx := context.TODO()
 	years, err := h.groups.Years(ctx)
 	if err != nil {
