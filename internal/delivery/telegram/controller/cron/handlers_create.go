@@ -110,7 +110,7 @@ func (h *CreateCronHandler) SelectTimeCallback(c tele.Context, state fsm.Context
 		return c.Send("invalid time data: " + err.Error())
 	}
 
-	cron := &Cron{
+	cron := Cron{
 		ChatID: c.Chat().ID,
 		At:     at,
 		Issuer: c.Sender().ID,
@@ -137,43 +137,40 @@ func sendFlagsMenu(c tele.Context, flags scheduler.FlagSet) error {
 }
 
 func (h *CreateCronHandler) FlagsCallback(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(*Cron)
+	cron := state.MustGet("cc").(Cron)
 
 	callback := c.Callback().Data
-
 	selectedFlag, ok := FlagSetFromCallback(callback)
 	if !ok {
 		return answerCallback(c, "unknown callback: "+callback, true)
 	}
 
 	flags := joinFlags(cron.Flags, selectedFlag)
-
-	if err := sendFlagsMenu(c, flags); err != nil {
-		return err
-	}
-
 	cron.Flags = flags
-	return nil
+	state.Update("cc", cron)
+
+	return sendFlagsMenu(c, flags)
 }
 
 func (h *CreateCronHandler) AcceptFlagsCallback(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(*Cron)
+	cron := state.MustGet("cc").(Cron)
+	defer state.Update("cc", cron)
 
-	if err := c.Edit("Отправьте название данной задачи"); err != nil {
-		return err
-	}
 	state.Set(InputTitle)
 	cron.Step = &InputTitle
-	return nil
+
+	return c.EditOrSend("Отправьте название данной задачи")
 }
 
 func (h *CreateCronHandler) InputTitle(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(*Cron)
+	cron := state.MustGet("cc").(Cron)
 
-	title := c.Text()
-	cron.Title = title
+	cron.Title = c.Text()
+	cron.Step = &AcceptCron
+	state.Update("cc", cron)
+	state.Set(AcceptCron)
 
-	err := c.Send(
+	return c.Send(
 		fmt.Sprintf(
 			"Название: %s\nВремя: %s\nОпции:%s",
 			cron.Title,
@@ -182,17 +179,11 @@ func (h *CreateCronHandler) InputTitle(c tele.Context, state fsm.Context) error 
 		),
 		AcceptMarkup(),
 	)
-	if err != nil {
-		return err
-	}
-	cron.Step = &AcceptCron
-	state.Set(AcceptCron)
-	return nil
 }
 
 func (h *CreateCronHandler) AcceptCallback(c tele.Context, state fsm.Context) error {
 	go c.Respond()
-	cron := state.MustGet("cc").(*Cron)
+	cron := state.MustGet("cc").(Cron)
 
 	chat, _, err := h.chats.Lookup(context.TODO(), c.Chat().ID)
 	if err != nil {
@@ -210,7 +201,6 @@ func (h *CreateCronHandler) AcceptCallback(c tele.Context, state fsm.Context) er
 		return c.Send("Произошла ошибка: " + err.Error())
 	}
 	state.Finish(true)
-
 	return c.Send("Задача создана.")
 }
 
@@ -251,7 +241,8 @@ func flagString(flags scheduler.FlagSet, sep string) string {
 }
 
 func (h *CreateCronHandler) BackBtnCallback(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(*Cron)
+	cron := state.MustGet("cc").(Cron)
+	defer state.Update("cc", cron)
 	switch *cron.Step {
 	case SelectOpt:
 		cron.Step = nil
