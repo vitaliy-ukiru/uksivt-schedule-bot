@@ -41,6 +41,10 @@ func (g Group) String() string {
 	return year + strings.ToUpper(g.Spec) + "-" + num
 }
 
+func MatchGroup(strGroup string) bool {
+	return reGroupPattern.MatchString(strGroup)
+}
+
 func ParseGroup(strGroup string) (g Group, err error) {
 	match := reGroupPattern.FindStringSubmatch(strGroup)
 	if match == nil {

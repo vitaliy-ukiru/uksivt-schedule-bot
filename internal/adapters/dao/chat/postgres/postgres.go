@@ -8,7 +8,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
 	. "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
 type Repository struct {
@@ -62,12 +61,12 @@ func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, err
 
 }
 
-func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error {
+func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *string) error {
 	g := pgtype.Text{
 		Status: pgtype.Null,
 	}
 	if group != nil {
-		g.String = group.String()
+		g.String = *group
 		g.Status = pgtype.Present
 	}
 	tag, err := r.q.UpdateGroup(ctx, g, id)
