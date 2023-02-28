@@ -40,6 +40,6 @@ func (f FlagSet) With(b FlagSet) FlagSet {
 	return f | b
 }
 
-func (f FlagSet) Without(b FlagSet) FlagSet {
-	return f & (^b)
+func (f FlagSet) Toggle(b FlagSet) FlagSet {
+	return f ^ b
 }

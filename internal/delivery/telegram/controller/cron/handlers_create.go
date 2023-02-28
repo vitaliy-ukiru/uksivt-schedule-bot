@@ -213,13 +213,8 @@ func (c Cron) ToDTO() scheduler.CreateJobDTO {
 }
 
 func joinFlags(flags scheduler.FlagSet, input scheduler.FlagSet) scheduler.FlagSet {
-	//TODO: simplify
 	if input == scheduler.NextDay {
-		if flags.Has(input) {
-			return flags.Without(input)
-		}
-
-		return flags.With(input)
+		return flags.Toggle(input)
 	}
 
 	result := flags & scheduler.NextDay // save NextDay current state
