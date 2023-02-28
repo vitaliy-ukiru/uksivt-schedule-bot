@@ -4,7 +4,8 @@
 
 create table if not exists chats
 (
-    id            bigint generated always as identity,
+    id            bigint generated always as identity
+        primary key,
     chat_id       bigint                                 not null
         unique,
     college_group text,
