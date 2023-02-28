@@ -17,7 +17,6 @@ create table if not exists crons
     id      bigint generated always as identity
         primary key,
     chat_id integer      not null
-        constraint crons_chats_id_fk
             references chats,
     title varchar(200) not null,
     send_at time     not null,
