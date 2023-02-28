@@ -120,11 +120,7 @@ func rowToChat(row rowType) (*Chat, error) {
 	}
 
 	if row.CollegeGroup.Status == pgtype.Present {
-		g, err := scheduleapi.ParseGroup(row.CollegeGroup.String)
-		if err != nil {
-			return nil, errors.Wrap(err, "parse_group")
-		}
-		chat.Group = &g
+		chat.Group = &row.CollegeGroup.String
 	}
 
 	return chat, nil
