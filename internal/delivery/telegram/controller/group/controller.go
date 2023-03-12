@@ -9,12 +9,12 @@ import (
 
 type Handler struct {
 	chats  chat.Usecase
-	groups group.Usecase
+	groups group.Fetcher
 
 	logger *zap.Logger
 }
 
-func New(chats chat.Usecase, groups group.Usecase, logger *zap.Logger) *Handler {
+func New(chats chat.Usecase, groups group.Fetcher, logger *zap.Logger) *Handler {
 	return &Handler{chats: chats, groups: groups, logger: logger}
 }
 

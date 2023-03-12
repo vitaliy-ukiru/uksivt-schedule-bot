@@ -22,12 +22,12 @@ ORDER BY id, send_at;
 --name: CountInChat :one
 SELECT count(*)
 FROM crons
-WHERE chat_id = pggen.arg('ChatID');
+WHERE chat_id = pggen.arg('ChatID')::bigint;
 
 --name: FindByChat :many
 SELECT id, chat_id, title, send_at, flags
 FROM crons
-WHERE chat_id = pggen.arg('ChatID')
+WHERE chat_id = pggen.arg('ChatID')::bigint
 ORDER BY id;
 
 --name: FindAtTime :many
