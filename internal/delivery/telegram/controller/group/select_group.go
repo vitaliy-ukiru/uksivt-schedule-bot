@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/vitaliy-ukiru/fsm-telebot"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/group"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
@@ -38,7 +38,7 @@ func (h *Handler) YearCallback(c tele.Context, state fsm.Context) error {
 		return c.Send("ERROR: parse year: " + err.Error())
 	}
 	state.Set(SelectSpecState)
-	_ = state.Update("g", scheduleapi.Group{Year: year})
+	_ = state.Update("g", group.Group{Year: year})
 	specs, err := h.groups.Specs(context.TODO(), year)
 	if err != nil {
 		h.logger.Error("get specs", zap.Error(err), zap.Int("year", year))
@@ -51,7 +51,7 @@ func (h *Handler) YearCallback(c tele.Context, state fsm.Context) error {
 
 func (h *Handler) SpecCallback(c tele.Context, state fsm.Context) error {
 
-	g, ok := state.MustGet("g").(scheduleapi.Group)
+	g, ok := state.MustGet("g").(group.Group)
 	if !ok {
 		_ = state.Finish(true)
 		return c.Send("ERROR: invalid data, aborting")
@@ -74,20 +74,22 @@ func (h *Handler) SpecCallback(c tele.Context, state fsm.Context) error {
 }
 
 func (h *Handler) NumCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(scheduleapi.Group)
+	g, ok := state.MustGet("g").(group.Group)
 	if !ok {
 		_ = state.Finish(true)
 		return c.Send("invalid data, aborting")
 	}
 	g.Number, _ = strconv.Atoi(c.Data())
+
 	_ = state.Update("g", g)
 	state.Set(AcceptGroupState)
 	markup := AcceptMarkup()
+
 	return c.EditOrSend(fmt.Sprintf("Вы выбрали %s.\n\nПодвердите выбор", g.String()), markup)
 }
 
 func (h *Handler) AcceptCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(scheduleapi.Group)
+	g, ok := state.MustGet("g").(group.Group)
 	if !ok {
 		_ = state.Finish(true)
 		return c.Send("invalid data, aborting")

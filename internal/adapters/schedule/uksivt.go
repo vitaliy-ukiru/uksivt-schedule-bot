@@ -24,11 +24,7 @@ func NewService(c *api.Client) *Service {
 var ErrInvalidGroup = api.ErrInvalidGroup
 
 func (s Service) LessonsForWeek(ctx context.Context, group string, weekStart time.Time) (api.WeekOfLessons, error) {
-	g, err := api.ParseGroup(group)
-	if err != nil {
-		return api.WeekOfLessons{}, ErrInvalidGroup
-	}
-	lessonsSet, err := s.c.Lessons(ctx, g, weekStart)
+	lessonsSet, err := s.c.Lessons(ctx, group, weekStart)
 
 	if err != nil {
 		return api.WeekOfLessons{}, errors.Wrap(err, "cannot fetch lessons")
@@ -37,17 +33,12 @@ func (s Service) LessonsForWeek(ctx context.Context, group string, weekStart tim
 }
 
 func (s Service) LessonsOneDay(ctx context.Context, group string, today time.Time) ([]api.Lesson, error) {
-	g, err := api.ParseGroup(group)
-	if err != nil {
-		return nil, errors.Wrap(err, "invalid group")
-	}
-
 	wd := today.Weekday()
 	if wd < time.Monday || wd > time.Saturday {
 		return nil, errors.New("it not study day")
 	}
 
-	week, err := s.c.Lessons(ctx, g, today)
+	week, err := s.c.Lessons(ctx, group, today)
 	if err != nil {
 		return nil, err
 	}
