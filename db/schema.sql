@@ -14,8 +14,9 @@ create table if not exists groups
 
 create table if not exists chats
 (
-    id            bigint generated always as identity,
-    chat_id       bigint                                 not null
+    id         bigint generated always as identity
+        primary key,
+    chat_id    bigint                                 not null
         unique,
     group_id   smallint
         references groups,
@@ -27,10 +28,9 @@ create table if not exists crons
 (
     id      bigint generated always as identity
         primary key,
-    chat_id integer      not null
-        constraint crons_chats_id_fk
-            references chats,
-    title varchar(200) not null,
-    send_at time     not null,
-    flags   smallint not null
+    chat_id bigint       not null
+        references chats,
+    title   varchar(200) not null,
+    send_at time         not null,
+    flags   smallint     not null
 );

@@ -27,9 +27,9 @@ func main() {
 		OutputDir:   *outputDir,
 		Language:    pggen.LangGo,
 		TypeOverrides: map[string]string{
-			"integer":  "int64",
+			"integer":  "int",
 			"bigint":   "int64",
-			"smallint": "uint16",
+			"smallint": "github.com/jackc/pgtype.Int2",
 			"text":     "github.com/jackc/pgtype.Text",
 			"time":     "time.Time",
 			"interval": "time.Duration",
