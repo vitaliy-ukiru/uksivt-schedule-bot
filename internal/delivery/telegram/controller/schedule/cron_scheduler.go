@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
@@ -101,7 +101,7 @@ func (h *Handler) CronSchedulerJob() {
 
 type cronParams struct {
 	Day     time.Time
-	Lessons []scheduleapi.Lesson
+	Lessons []schedule.Lesson
 	Cron    scheduler.CronJob
 	Chat    *chat.Chat
 }
@@ -126,7 +126,7 @@ func (h *Handler) cronFullOnReplace(p *cronParams) error {
 }
 
 func (h *Handler) cronReplaces(p *cronParams) error {
-	replaces := make([]scheduleapi.Lesson, len(p.Lessons)/2)
+	replaces := make([]schedule.Lesson, len(p.Lessons)/2)
 	for _, lesson := range p.Lessons {
 		if lesson.Replacement {
 			replaces = append(replaces, lesson)

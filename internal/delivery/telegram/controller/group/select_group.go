@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/vitaliy-ukiru/fsm-telebot"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/group"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/group"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )

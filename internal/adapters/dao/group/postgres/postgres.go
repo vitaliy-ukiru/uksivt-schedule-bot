@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgtype"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/group"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/group"
 )
 
 type Connection genericConn

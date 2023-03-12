@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/group"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/group"
 )
 
 type LookupStatus byte

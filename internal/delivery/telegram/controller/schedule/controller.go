@@ -6,14 +6,14 @@ import (
 
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
+	chat2 "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 type Handler struct {
-	chats  chat.Usecase
+	chats  chat2.Usecase
 	uksivt schedule.Usecase
 	crons  scheduler.Usecase
 
@@ -22,7 +22,7 @@ type Handler struct {
 }
 
 func New(
-	chats chat.Usecase,
+	chats chat2.Usecase,
 	uksivt schedule.Usecase,
 	crons scheduler.Usecase,
 	logger *zap.Logger,
@@ -45,7 +45,7 @@ func (h *Handler) Bind(m *fsm.Manager) {
 	)
 }
 
-func (h *Handler) getChat(tgID int64) *chat.Chat {
+func (h *Handler) getChat(tgID int64) *chat2.Chat {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 

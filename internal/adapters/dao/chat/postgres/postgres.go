@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v4"
 	"github.com/pkg/errors"
-	. "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
+	. "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 )
 
 type Repository struct {

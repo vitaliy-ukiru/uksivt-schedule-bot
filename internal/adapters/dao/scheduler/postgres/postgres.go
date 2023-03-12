@@ -7,7 +7,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgtype"
 	"github.com/mitchellh/mapstructure"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 )
 
 type Repository struct {

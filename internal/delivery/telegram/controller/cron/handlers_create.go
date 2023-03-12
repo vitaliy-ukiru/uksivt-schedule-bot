@@ -8,7 +8,7 @@ import (
 
 	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
+	scheduler2 "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
@@ -25,7 +25,7 @@ var (
 type Cron struct {
 	At    time.Time
 	Title string
-	Flags scheduler.FlagSet
+	Flags scheduler2.FlagSet
 
 	ChatID int64
 	Issuer int64
@@ -125,7 +125,7 @@ func (h *CreateCronHandler) SelectTimeCallback(c tele.Context, state fsm.Context
 	return sendFlagsMenu(c, 0)
 }
 
-func sendFlagsMenu(c tele.Context, flags scheduler.FlagSet) error {
+func sendFlagsMenu(c tele.Context, flags scheduler2.FlagSet) error {
 	const s = `Выберите режим отправки.
 Более подробное описание каждого:
 	0. Отправлять для следующего дня (совместима с другими режимами)
@@ -204,20 +204,20 @@ func (h *CreateCronHandler) AcceptCallback(c tele.Context, state fsm.Context) er
 	return c.Send("Задача создана.")
 }
 
-func (c Cron) ToDTO() scheduler.CreateJobDTO {
-	return scheduler.CreateJobDTO{
+func (c Cron) ToDTO() scheduler2.CreateJobDTO {
+	return scheduler2.CreateJobDTO{
 		Title: c.Title,
 		At:    c.At,
 		Flags: uint16(c.Flags),
 	}
 }
 
-func joinFlags(flags scheduler.FlagSet, input scheduler.FlagSet) scheduler.FlagSet {
-	if input == scheduler.NextDay {
+func joinFlags(flags scheduler2.FlagSet, input scheduler2.FlagSet) scheduler2.FlagSet {
+	if input == scheduler2.NextDay {
 		return flags.Toggle(input)
 	}
 
-	result := flags & scheduler.NextDay // save NextDay current state
+	result := flags & scheduler2.NextDay // save NextDay current state
 	if flags.Has(input) {
 		return result
 	}
@@ -225,7 +225,7 @@ func joinFlags(flags scheduler.FlagSet, input scheduler.FlagSet) scheduler.FlagS
 
 }
 
-func flagString(flags scheduler.FlagSet, sep string) string {
+func flagString(flags scheduler2.FlagSet, sep string) string {
 	modes := make([]string, 0, 2)
 	for _, mode := range FlagModes {
 		if flags.Has(mode.Mode) {

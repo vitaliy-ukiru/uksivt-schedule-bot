@@ -3,11 +3,11 @@ package telegram
 import (
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/group"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/controller/cron"
 	selectGroup "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/controller/group"
 	lessons "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/controller/schedule"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )

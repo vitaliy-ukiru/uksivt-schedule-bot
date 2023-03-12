@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/keyboard"
 	tele "gopkg.in/telebot.v3"

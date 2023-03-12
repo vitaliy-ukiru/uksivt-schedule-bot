@@ -7,19 +7,19 @@ import (
 	"time"
 
 	"github.com/vitaliy-ukiru/fsm-telebot"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	scheduler2 "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 type EditCronHandler struct {
 	chats  chat.Usecase
-	crons  scheduler.Usecase
+	crons  scheduler2.Usecase
 	logger *zap.Logger
 }
 
-func NewEditHandler(chats chat.Usecase, crons scheduler.Usecase, logger *zap.Logger) *EditCronHandler {
+func NewEditHandler(chats chat.Usecase, crons scheduler2.Usecase, logger *zap.Logger) *EditCronHandler {
 	return &EditCronHandler{chats: chats, crons: crons, logger: logger}
 }
 
@@ -61,7 +61,7 @@ func (h *EditCronHandler) EditSelectCronCallback(c tele.Context, state fsm.Conte
 	return h.SendCronView(c, *cron)
 }
 
-func (h *EditCronHandler) SendCronView(c tele.Context, cron scheduler.CronJob) error {
+func (h *EditCronHandler) SendCronView(c tele.Context, cron scheduler2.CronJob) error {
 	return c.Send(fmt.Sprintf(
 		"Название: %s\nВремя:%s\nОпции:%s\n\nВыберите что редактировать:",
 		cron.Title,
@@ -70,7 +70,7 @@ func (h *EditCronHandler) SendCronView(c tele.Context, cron scheduler.CronJob) e
 	), SelectEditingFieldMarkup())
 }
 
-func (h *EditCronHandler) EditOrSendCronView(c tele.Context, cron scheduler.CronJob) error {
+func (h *EditCronHandler) EditOrSendCronView(c tele.Context, cron scheduler2.CronJob) error {
 	return c.EditOrSend(fmt.Sprintf(
 		"Название: %s\nВремя:%s\nОпции:%s\n\nВыберите что редактировать:",
 		cron.Title,
@@ -91,7 +91,7 @@ func (h *EditCronHandler) EditTimeCallback(c tele.Context, state fsm.Context) er
 
 func (h *EditCronHandler) EditFlagsCallback(c tele.Context, state fsm.Context) error {
 	state.Set(EditFlags)
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler2.CronJob)
 	if !ok {
 		return c.Send("cannot get cron id from context")
 	}
@@ -101,7 +101,7 @@ func (h *EditCronHandler) EditFlagsCallback(c tele.Context, state fsm.Context) e
 }
 
 func (h *EditCronHandler) InputNewTitle(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler2.CronJob)
 	if !ok {
 		return c.Send("cannot get cron from context")
 	}
@@ -128,7 +128,7 @@ func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 	if err != nil {
 		return c.Send("invalid time data: " + err.Error())
 	}
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler2.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}
@@ -141,7 +141,7 @@ func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 }
 
 func (h *EditCronHandler) InputFlagCallback(c tele.Context, state fsm.Context) error {
-	flags, ok := state.MustGet("fce").(scheduler.FlagSet)
+	flags, ok := state.MustGet("fce").(scheduler2.FlagSet)
 	if !ok {
 		return answerCallback(c, "cannot get flags from context", true)
 	}
@@ -160,12 +160,12 @@ func (h *EditCronHandler) InputFlagCallback(c tele.Context, state fsm.Context) e
 }
 
 func (h *EditCronHandler) AcceptFlagCallback(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler2.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}
 
-	flags, ok := state.MustGet("fce").(scheduler.FlagSet)
+	flags, ok := state.MustGet("fce").(scheduler2.FlagSet)
 	if !ok {
 		return answerCallback(c, "cannot get flags from context", true)
 	}
@@ -179,7 +179,7 @@ func (h *EditCronHandler) AcceptFlagCallback(c tele.Context, state fsm.Context) 
 }
 
 func (h *EditCronHandler) DoneEditingCallback(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler2.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}

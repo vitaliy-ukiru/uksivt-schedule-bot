@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	pkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
+	pkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
