@@ -14,12 +14,14 @@ import (
 	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/fsm-telebot/storages/memory"
 	chatPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/dao/chat/postgres"
+	groupPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/dao/group/postgres"
 	cronPostgres "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/dao/scheduler/postgres"
-	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/group"
+	groupAdapter "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/group"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/group"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/scheduler"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/client/pg"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
@@ -120,20 +122,28 @@ func main() {
 
 	}
 
-	var groupsService group.Usecase
+	var (
+		groupStorage = groupPostgres.NewRepository(pool)
+		groupService = group.NewService(groupStorage)
+		groupFetcher groupAdapter.Fetcher
+	)
+
 	if *groupsFilePath == "postgres" {
-		groupsService = group.NewPostgresService(pool)
+		groupFetcher = groupService
 	} else {
-		groupsService, err = group.NewInMemoryFromFile(*groupsFilePath)
+		groupFetcher, err = groupAdapter.NewInMemoryFromFile(*groupsFilePath)
 		if err != nil {
 			log.Fatal("cannot read groups file", zap.Error(err))
 		}
 	}
 
+	log.Debug("group services configured")
+
 	var (
 		chatStorage = chatPostgres.NewRepository(pool)
-		chatService = chat.NewService(chatStorage)
+		chatService = chat.NewService(chatStorage, groupService)
 	)
+
 	log.Debug("chat services configured")
 
 	var (
@@ -146,14 +156,14 @@ func main() {
 		cronStorage = cronPostgres.NewRepository(pool)
 		cronService = scheduler.NewService(cronStorage, cfg.Scheduler.Range)
 	)
+
 	log.Debug("cron services configured")
 
 	var (
-		groupsHandler     = telegram.NewGroupHandler(chatService, groupsService, log)
+		groupsHandler     = telegram.NewGroupHandler(chatService, groupFetcher, log)
 		cronCreateHandler = telegram.NewCreateCronHandler(chatService, cronService, log)
 		cronEditHandler   = telegram.NewEditCronHandler(chatService, cronService, log)
-		lessonsHandler    = telegram.NewScheduleHandler(chatService, uksivtSchedule, cronService, log,
-			bot)
+		lessonsHandler    = telegram.NewScheduleHandler(chatService, uksivtSchedule, cronService, log, bot)
 	)
 
 	handler := telegram.New(

@@ -62,9 +62,14 @@ func (c Client) Teachers(ctx context.Context) ([]string, error) {
 	return result, nil
 }
 
-func (c Client) Lessons(ctx context.Context, group Group, weekStart time.Time) (map[time.Weekday][]Lesson, error) {
+func (c Client) Lessons(ctx context.Context, group string, weekStart time.Time) (map[time.Weekday][]Lesson, error) {
+	if !MatchGroup(group) {
+		return nil, ErrInvalidGroup
+	}
+
 	local := weekStart.Format("2006-01-02")
-	path := fmt.Sprintf("%s/%s/from_date/%s", methodGetGroups, group.String(), local)
+	path := fmt.Sprintf("%s/%s/from_date/%s", methodGetGroups, group, local)
+
 	response := make(map[time.Weekday][]Lesson)
 	if err := c.get(ctx, path, &response); err != nil {
 		return nil, err

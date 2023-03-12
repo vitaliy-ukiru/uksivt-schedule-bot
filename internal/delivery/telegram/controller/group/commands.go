@@ -25,5 +25,5 @@ func (h Handler) GetGroupCommand(c tele.Context) error {
 		return c.Send("Группа для чата не установлена")
 	}
 
-	return c.Send(fmt.Sprintf("Для чата выбрана группа %s", chat.Group.String()))
+	return c.Send(fmt.Sprintf("Для чата выбрана группа %s", *chat.Group))
 }

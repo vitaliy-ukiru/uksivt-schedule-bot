@@ -1,7 +1,6 @@
 package scheduleapi
 
 import (
-	"database/sql/driver"
 	"errors"
 	"regexp"
 	"strconv"
@@ -28,10 +27,6 @@ func (g *Group) UnmarshalText(text []byte) error {
 	return nil
 }
 
-func (g Group) Value() (driver.Value, error) {
-	return g.String(), nil
-}
-
 var ErrInvalidGroup = errors.New("invalid group format")
 
 func (g Group) String() string {
@@ -39,6 +34,10 @@ func (g Group) String() string {
 	num := strconv.Itoa(g.Number)
 
 	return year + strings.ToUpper(g.Spec) + "-" + num
+}
+
+func MatchGroup(strGroup string) bool {
+	return reGroupPattern.MatchString(strGroup)
 }
 
 func ParseGroup(strGroup string) (g Group, err error) {

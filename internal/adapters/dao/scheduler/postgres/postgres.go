@@ -26,7 +26,7 @@ func (r *Repository) Insert(ctx context.Context, cron scheduler.CronJob) (int64,
 	return r.q.CreateJob(ctx, CreateJobParams{
 		ChatID: cron.ChatID,
 		SendAt: cron.At,
-		Flags:  uint16(cron.Flags),
+		Flags:  pgtype.Int2{Int: int16(cron.Flags), Status: pgtype.Present},
 		Title: pgtype.Varchar{
 			String: cron.Title,
 			Status: pgtype.Present,
@@ -129,7 +129,7 @@ type cronRow struct {
 	ChatID int64
 	Title  pgtype.Varchar
 	SendAt time.Time
-	Flags  uint16
+	Flags  pgtype.Int2
 }
 
 func (row cronRow) ToDomain() scheduler.CronJob {
@@ -137,7 +137,7 @@ func (row cronRow) ToDomain() scheduler.CronJob {
 		ID:     row.ID,
 		At:     row.SendAt,
 		Title:  row.Title.String,
-		Flags:  scheduler.FlagSet(row.Flags),
+		Flags:  scheduler.FlagSet(row.Flags.Int),
 		ChatID: row.ChatID,
 	}
 }

@@ -211,7 +211,7 @@ RETURNING id;`
 type CreateJobParams struct {
 	ChatID int64
 	SendAt time.Time
-	Flags  uint16
+	Flags  pgtype.Int2
 	Title  pgtype.Varchar
 }
 
@@ -250,7 +250,7 @@ type FindByIDRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  uint16         `json:"flags"`
+	Flags  pgtype.Int2    `json:"flags"`
 }
 
 // FindByID implements Querier.FindByID.
@@ -290,7 +290,7 @@ type FindInPeriodRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  uint16         `json:"flags"`
+	Flags  pgtype.Int2    `json:"flags"`
 }
 
 // FindInPeriod implements Querier.FindInPeriod.
@@ -343,7 +343,7 @@ func (q *DBQuerier) FindInPeriodScan(results pgx.BatchResults) ([]FindInPeriodRo
 
 const countInChatSQL = `SELECT count(*)
 FROM crons
-WHERE chat_id = $1;`
+WHERE chat_id = $1::bigint;`
 
 // CountInChat implements Querier.CountInChat.
 func (q *DBQuerier) CountInChat(ctx context.Context, chatID int64) (int64, error) {
@@ -373,7 +373,7 @@ func (q *DBQuerier) CountInChatScan(results pgx.BatchResults) (int64, error) {
 
 const findByChatSQL = `SELECT id, chat_id, title, send_at, flags
 FROM crons
-WHERE chat_id = $1
+WHERE chat_id = $1::bigint
 ORDER BY id;`
 
 type FindByChatRow struct {
@@ -381,7 +381,7 @@ type FindByChatRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  uint16         `json:"flags"`
+	Flags  pgtype.Int2    `json:"flags"`
 }
 
 // FindByChat implements Querier.FindByChat.
@@ -442,7 +442,7 @@ type FindAtTimeRow struct {
 	ChatID int64          `json:"chat_id"`
 	Title  pgtype.Varchar `json:"title"`
 	SendAt time.Time      `json:"send_at"`
-	Flags  uint16         `json:"flags"`
+	Flags  pgtype.Int2    `json:"flags"`
 }
 
 // FindAtTime implements Querier.FindAtTime.
