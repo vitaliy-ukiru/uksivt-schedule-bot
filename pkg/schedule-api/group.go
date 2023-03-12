@@ -1,7 +1,6 @@
 package scheduleapi
 
 import (
-	"database/sql/driver"
 	"errors"
 	"regexp"
 	"strconv"
@@ -26,10 +25,6 @@ func (g *Group) UnmarshalText(text []byte) error {
 	}
 	*g = group
 	return nil
-}
-
-func (g Group) Value() (driver.Value, error) {
-	return g.String(), nil
 }
 
 var ErrInvalidGroup = errors.New("invalid group format")
