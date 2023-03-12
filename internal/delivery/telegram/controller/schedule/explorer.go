@@ -2,12 +2,14 @@ package schedule
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/ivahaev/russian-time"
 	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
 	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
 
@@ -28,23 +30,23 @@ func (h *Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 		)
 	}
 
-	var group scheduleapi.Group
+	var group string
 	if chat.Group != nil {
 		group = *chat.Group
 	}
 
 	if payload != "" {
-		var err error
-		group, err = scheduleapi.ParseGroup(c.Data())
-		if err != nil {
-			return c.Send(
-				"Не получилось достать группу из аргумента команды.\n" +
-					"Пример корректного ввода: 20П-1",
-			)
-		}
+		group = c.Data()
+
 	}
 	t := time.Now()
 	lessons, err := h.uksivt.LessonsOneDay(context.TODO(), group, t)
+	if errors.Is(err, schedule.ErrInvalidGroup) {
+		return c.Send(
+			"Не получилось достать группу из аргумента команды.\n" +
+				"Пример корректного ввода: 20П-1",
+		)
+	}
 	if err != nil {
 		return c.Send("error: " + err.Error())
 	}
@@ -57,12 +59,12 @@ func (h *Handler) ExplorerCallback(c tele.Context, data callback.M) error {
 		return answerCallback(c, "invalid callback day", true)
 	}
 
-	group, err := scheduleapi.ParseGroup(data["g"])
-	if err != nil {
-		return answerCallback(c, "invalid callback group", true)
-	}
+	group := data["g"]
 
 	lessons, err := h.uksivt.LessonsOneDay(context.TODO(), group, day)
+	if errors.Is(err, schedule.ErrInvalidGroup) {
+		return answerCallback(c, "invalid callback group", true)
+	}
 	if err != nil {
 		return answerCallback(c, "error: "+err.Error(), true)
 	}

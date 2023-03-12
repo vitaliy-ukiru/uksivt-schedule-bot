@@ -24,7 +24,7 @@ type Usecase interface {
 	ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error)
 	//ActiveChats(ctx context.Context) ([]Chat, error)
 
-	SetGroup(ctx context.Context, chatTgID int64, group scheduleapi.Group) error
+	SetGroup(ctx context.Context, chatTgID int64, group string) error
 	ClearGroup(ctx context.Context, chatTgID int64) error
 	Restore(ctx context.Context, chatTgID int64) (*Chat, error)
 	Delete(ctx context.Context, chatTgID int64) error
@@ -34,7 +34,7 @@ type Storage interface {
 	Create(ctx context.Context, chatId int64) (CreateChatDTO, error)
 	FindByID(ctx context.Context, chatId int64) (*Chat, error)
 	FindByTelegramID(ctx context.Context, id int64) (*Chat, error)
-	UpdateChatGroup(ctx context.Context, id int64, group *scheduleapi.Group) error
+	UpdateChatGroup(ctx context.Context, id int64, group *string) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
 	Delete(ctx context.Context, chatId int64) error
 	Session(ctx context.Context, fn func(session Storage) error) error
@@ -115,7 +115,11 @@ func (s *Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, erro
 	return chat, nil
 }
 
-func (s *Service) SetGroup(ctx context.Context, chatTgID int64, group scheduleapi.Group) error {
+func (s *Service) SetGroup(ctx context.Context, chatTgID int64, group string) error {
+	if !scheduleapi.MatchGroup(group) {
+		return scheduleapi.ErrInvalidGroup
+	}
+
 	return errors.Wrapf(
 		s.store.UpdateChatGroup(ctx, chatTgID, &group),
 		"cannot set group chat=%d group=%+v", chatTgID, group,

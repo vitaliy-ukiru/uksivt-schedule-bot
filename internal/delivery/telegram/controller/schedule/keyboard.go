@@ -3,7 +3,6 @@ package schedule
 import (
 	"time"
 
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/keyboard"
 	tele "gopkg.in/telebot.v3"
@@ -11,14 +10,14 @@ import (
 
 var Callback = callback.New("schedule", "day", "g")
 
-func Button(text string, day time.Time, group scheduleapi.Group) tele.Btn {
+func Button(text string, day time.Time, group string) tele.Btn {
 	return Callback.MustTeleBtn(text, callback.M{
 		"day": day.Format("2006-01-02"),
-		"g":   group.String(),
+		"g":   group,
 	})
 }
 
-func ExplorerMarkup(today time.Time, group scheduleapi.Group) *tele.ReplyMarkup {
+func ExplorerMarkup(today time.Time, group string) *tele.ReplyMarkup {
 	b := keyboard.NewBuilder(2)
 
 	b.Add(

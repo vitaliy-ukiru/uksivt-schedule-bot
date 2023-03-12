@@ -94,7 +94,7 @@ func (h *Handler) AcceptCallback(c tele.Context, state fsm.Context) error {
 	}
 	defer state.Finish(true)
 
-	if err := h.chats.SetGroup(context.Background(), c.Chat().ID, g); err != nil {
+	if err := h.chats.SetGroup(context.Background(), c.Chat().ID, g.String()); err != nil {
 		return c.Send("error: " + err.Error())
 	}
 	return c.Send("Для данного чата установлена группа: " + g.String())
