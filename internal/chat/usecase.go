@@ -26,14 +26,16 @@ type Usecase interface {
 
 	SetGroup(ctx context.Context, chatTgID int64, group string) error
 	ClearGroup(ctx context.Context, chatTgID int64) error
+
 	Restore(ctx context.Context, chatTgID int64) (*Chat, error)
 	Delete(ctx context.Context, chatTgID int64) error
 }
 
 type Storage interface {
 	Create(ctx context.Context, chatId int64) (CreateChatDTO, error)
-	FindByID(ctx context.Context, chatId int64) (*Chat, error)
-	FindByTelegramID(ctx context.Context, id int64) (*Chat, error)
+	FindByID(ctx context.Context, chatId int64) (*ModelDTO, error)
+	FindByTelegramID(ctx context.Context, id int64) (*ModelDTO, error)
+
 	UpdateChatGroup(ctx context.Context, id int64, group *string) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
 	Delete(ctx context.Context, chatId int64) error
@@ -94,21 +96,23 @@ func (s *Service) Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, 
 }
 
 func (s *Service) ByID(ctx context.Context, chatId int64) (*Chat, error) {
-	chat, err := s.store.FindByID(ctx, chatId)
+	model, err := s.store.FindByID(ctx, chatId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find_by_id id=%d", chatId)
 	}
-	if chat.IsDeleted() {
-		return chat, ErrChatDeleted
-	}
-	return chat, nil
+	return s.modelToDomain(model)
 }
 
 func (s *Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
-	chat, err := s.store.FindByTelegramID(ctx, chatTgId)
+	model, err := s.store.FindByTelegramID(ctx, chatTgId)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find_by_tg chat=%d", chatTgId)
 	}
+	return s.modelToDomain(model)
+}
+
+func (s *Service) modelToDomain(model *ModelDTO) (*Chat, error) {
+	chat := model.chat()
 	if chat.IsDeleted() {
 		return chat, ErrChatDeleted
 	}
