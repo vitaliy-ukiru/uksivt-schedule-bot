@@ -77,7 +77,7 @@ func (h *Handler) CronSchedulerJob() {
 			go func() {
 				_, err := h.bot.Send(
 					tele.ChatID(c.TgID),
-					lessonsToString(day, lessons),
+					lessonsToString(day, *c.Group, lessons),
 				)
 				errChan <- err
 			}()
@@ -121,7 +121,7 @@ func (h *Handler) cronFullOnReplace(p *cronParams) error {
 		}
 	}
 
-	_, err := h.bot.Send(tele.ChatID(p.Chat.TgID), lessonsToString(p.Day, p.Lessons))
+	_, err := h.bot.Send(tele.ChatID(p.Chat.TgID), lessonsToString(p.Day, *p.Chat.Group, p.Lessons))
 	return err
 }
 
@@ -146,7 +146,7 @@ func (h *Handler) cronReplaces(p *cronParams) error {
 
 	_, err := h.bot.Send(
 		tele.ChatID(p.Chat.TgID),
-		lessonsToString(p.Day, replaces),
+		lessonsToString(p.Day, *p.Chat.Group, replaces),
 	)
 	return err
 }

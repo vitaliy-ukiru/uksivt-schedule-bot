@@ -3,11 +3,8 @@ package schedule
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 	"time"
 
-	"github.com/ivahaev/russian-time"
 	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
@@ -56,7 +53,7 @@ func (h *Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 	if err != nil {
 		return c.Send("error: " + err.Error())
 	}
-	return c.Send(lessonsToString(t, lessons), ExplorerMarkup(t, group))
+	return c.Send(lessonsToString(t, group, lessons), ExplorerMarkup(t, group))
 }
 
 func (h *Handler) ExplorerCallback(c tele.Context, data callback.M) error {
@@ -75,25 +72,7 @@ func (h *Handler) ExplorerCallback(c tele.Context, data callback.M) error {
 		return answerCallback(c, "error: "+err.Error(), true)
 	}
 
-	return c.EditOrSend(lessonsToString(day, lessons), ExplorerMarkup(day, group))
-
-}
-
-func lessonsToString(day time.Time, lessons []schedule.Lesson) string {
-	buff := make([]string, len(lessons)+1)
-
-	lt := rtime.Time(day)
-	buff[0] = fmt.Sprintf(
-		"%d %s | %s",
-		day.Day(),
-		lt.Month().StringInCase(),
-		lt.Weekday(),
-	)
-	for i, lesson := range lessons {
-		buff[i+1] = lesson.StringReplacement("<b>[ЗАМЕНА]</b> ")
-	}
-
-	return strings.Join(buff, "\n\n")
+	return c.EditOrSend(lessonsToString(day, group, lessons), ExplorerMarkup(day, group))
 }
 
 func answerCallback(c tele.Context, text string, alert bool) error {
