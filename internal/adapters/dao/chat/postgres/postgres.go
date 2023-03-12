@@ -36,7 +36,7 @@ func (r *Repository) Create(ctx context.Context, chatId int64) (CreateChatDTO, e
 	}, nil
 }
 
-func (r *Repository) FindByID(ctx context.Context, chatId int64) (*Chat, error) {
+func (r *Repository) FindByID(ctx context.Context, chatId int64) (*ModelDTO, error) {
 	row, err := r.q.FindByID(ctx, chatId)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrChatNotFound
@@ -44,11 +44,10 @@ func (r *Repository) FindByID(ctx context.Context, chatId int64) (*Chat, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, "pg.by_id")
 	}
-	chat, err := rowToChat(rowType(row))
-	return chat, errors.Wrap(err, "pg.by_id.convert")
+	return rowType(row).ToModel(), nil
 }
 
-func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, error) {
+func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*ModelDTO, error) {
 	row, err := r.q.FindByTgID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -56,8 +55,7 @@ func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, err
 		}
 		return nil, errors.Wrap(err, "pg.by_tg")
 	}
-	chat, err := rowToChat(rowType(row))
-	return chat, errors.Wrap(err, "pg.by_tg.convert")
+	return rowType(row).ToModel(), nil
 
 }
 
@@ -107,8 +105,8 @@ func (r *Repository) Session(ctx context.Context, fn func(session Storage) error
 
 type rowType FindByIDRow
 
-func rowToChat(row rowType) (*Chat, error) {
-	chat := &Chat{
+func (row rowType) ToModel() *ModelDTO {
+	chat := &ModelDTO{
 		ID:        row.ID,
 		TgID:      row.ChatID,
 		CreatedAt: row.CreatedAt.Time,
@@ -117,9 +115,9 @@ func rowToChat(row rowType) (*Chat, error) {
 		chat.DeletedAt = &row.DeletedAt.Time
 	}
 
-	if row.CollegeGroup.Status == pgtype.Present {
-		chat.Group = &row.CollegeGroup.String
+	if row.GroupID.Status == pgtype.Present {
+		chat.Group = &row.GroupID.Int
 	}
 
-	return chat, nil
+	return chat
 }
