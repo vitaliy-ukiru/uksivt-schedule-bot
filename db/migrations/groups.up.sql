@@ -1,13 +1,3 @@
-create table groups
-(
-
-    id   smallint generated always as identity
-        primary key ,
-    year smallint not null,
-    spec text     not null,
-    num  smallint not null
-);
-
 INSERT INTO groups (year, spec, num)
 VALUES (19, 'ВЕБ', 1),
        (19, 'ВЕБ', 2),

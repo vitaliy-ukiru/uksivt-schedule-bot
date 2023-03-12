@@ -2,14 +2,25 @@
 -- TODO PROPOSAL[GROUP_TYPE]: change column chats.college_group to coll_group_id (FK to groups.id)
 -- TODO PROPOSAL[CHAT_PK]: delete column ID, use telegram id as PRIMARY KEY
 
+create table if not exists groups
+(
+
+    id   bigint generated always as identity
+        primary key,
+    year smallint not null,
+    spec text     not null,
+    num  smallint not null
+);
+
 create table if not exists chats
 (
     id            bigint generated always as identity,
     chat_id       bigint                                 not null
         unique,
-    college_group text,
-    created_at    timestamp with time zone default now() not null,
-    deleted_at    timestamp with time zone
+    group_id   smallint
+        references groups,
+    created_at timestamp with time zone default now() not null,
+    deleted_at timestamp with time zone
 );
 
 create table if not exists crons
