@@ -4,13 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/pkg/errors"
 	api "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 )
 
 type Usecase interface {
-	LessonsForWeek(ctx context.Context, group string, weekStart time.Time) (api.WeekOfLessons, error)
-	LessonsOneDay(ctx context.Context, group string, today time.Time) ([]api.Lesson, error)
+	LessonsOneDay(ctx context.Context, group string, today time.Time) ([]Lesson, error)
 }
 
 type Service struct {
@@ -23,20 +21,8 @@ func NewService(c *api.Client) *Service {
 
 var ErrInvalidGroup = api.ErrInvalidGroup
 
-func (s Service) LessonsForWeek(ctx context.Context, group string, weekStart time.Time) (api.WeekOfLessons, error) {
-	lessonsSet, err := s.c.Lessons(ctx, group, weekStart)
-
-	if err != nil {
-		return api.WeekOfLessons{}, errors.Wrap(err, "cannot fetch lessons")
-	}
-	return api.SetToWeek(lessonsSet)
-}
-
-func (s Service) LessonsOneDay(ctx context.Context, group string, today time.Time) ([]api.Lesson, error) {
+func (s Service) LessonsOneDay(ctx context.Context, group string, today time.Time) ([]Lesson, error) {
 	wd := today.Weekday()
-	if wd < time.Monday || wd > time.Saturday {
-		return nil, errors.New("it not study day")
-	}
 
 	week, err := s.c.Lessons(ctx, group, today)
 	if err != nil {
@@ -44,5 +30,17 @@ func (s Service) LessonsOneDay(ctx context.Context, group string, today time.Tim
 	}
 
 	lessons := week[wd]
-	return lessons, nil
+
+	result := make([]Lesson, len(lessons))
+	for i, l := range lessons {
+		result[i] = Lesson{
+			LessonNumber: l.LessonNumber,
+			Name:         l.Name,
+			Teacher:      l.Teacher,
+			LessonHall:   l.LessonHall,
+			Time:         l.Time,
+			Replacement:  l.Replacement,
+		}
+	}
+	return result, nil
 }

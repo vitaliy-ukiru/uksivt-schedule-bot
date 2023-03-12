@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/ivahaev/russian-time"
-	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/schedule"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/callback"
 
 	tele "gopkg.in/telebot.v3"
@@ -31,15 +30,22 @@ func (h *Handler) LessonsCommand(c tele.Context, _ fsm.Context) error {
 	}
 
 	var group string
-	if chat.Group != nil {
-		group = *chat.Group
+	{
+		if chat.Group != nil {
+			group = *chat.Group
+		}
+
+		if payload != "" {
+			group = c.Data()
+
+		}
 	}
 
-	if payload != "" {
-		group = c.Data()
-
-	}
 	t := time.Now()
+	if t.Weekday() == time.Sunday {
+		t = t.AddDate(0, 0, 1)
+	}
+
 	lessons, err := h.uksivt.LessonsOneDay(context.TODO(), group, t)
 	if errors.Is(err, schedule.ErrInvalidGroup) {
 		return c.Send(
@@ -73,7 +79,7 @@ func (h *Handler) ExplorerCallback(c tele.Context, data callback.M) error {
 
 }
 
-func lessonsToString(day time.Time, lessons []scheduleapi.Lesson) string {
+func lessonsToString(day time.Time, lessons []schedule.Lesson) string {
 	buff := make([]string, len(lessons)+1)
 
 	lt := rtime.Time(day)
@@ -86,6 +92,7 @@ func lessonsToString(day time.Time, lessons []scheduleapi.Lesson) string {
 	for i, lesson := range lessons {
 		buff[i+1] = lesson.StringReplacement("<b>[ЗАМЕНА]</b> ")
 	}
+
 	return strings.Join(buff, "\n\n")
 }
 
