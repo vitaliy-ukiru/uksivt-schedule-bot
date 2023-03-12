@@ -61,14 +61,13 @@ func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*Chat, err
 
 }
 
-func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *string) error {
-	g := pgtype.Text{
-		Status: pgtype.Null,
-	}
+func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *int16) error {
+	var g pgtype.Int2
 	if group != nil {
-		g.String = *group
+		g.Int = *group
 		g.Status = pgtype.Present
 	}
+
 	tag, err := r.q.UpdateGroup(ctx, g, id)
 	if err != nil {
 		return errors.Wrap(err, "pg.update")
