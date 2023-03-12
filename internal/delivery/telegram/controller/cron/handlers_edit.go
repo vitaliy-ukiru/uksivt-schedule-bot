@@ -57,11 +57,11 @@ func (h *EditCronHandler) EditSelectCronCallback(c tele.Context, state fsm.Conte
 		return answerCallback(c, "cannot get cron: "+err.Error(), true)
 	}
 	state.Set(SelectEditingField)
-	state.Update("ce", cron)
-	return h.SendCronView(c, cron)
+	state.Update("ce", *cron)
+	return h.SendCronView(c, *cron)
 }
 
-func (h *EditCronHandler) SendCronView(c tele.Context, cron *scheduler.CronJob) error {
+func (h *EditCronHandler) SendCronView(c tele.Context, cron scheduler.CronJob) error {
 	return c.Send(fmt.Sprintf(
 		"Название: %s\nВремя:%s\nОпции:%s\n\nВыберите что редактировать:",
 		cron.Title,
@@ -70,7 +70,7 @@ func (h *EditCronHandler) SendCronView(c tele.Context, cron *scheduler.CronJob) 
 	), SelectEditingFieldMarkup())
 }
 
-func (h *EditCronHandler) EditOrSendCronView(c tele.Context, cron *scheduler.CronJob) error {
+func (h *EditCronHandler) EditOrSendCronView(c tele.Context, cron scheduler.CronJob) error {
 	return c.EditOrSend(fmt.Sprintf(
 		"Название: %s\nВремя:%s\nОпции:%s\n\nВыберите что редактировать:",
 		cron.Title,
@@ -91,23 +91,26 @@ func (h *EditCronHandler) EditTimeCallback(c tele.Context, state fsm.Context) er
 
 func (h *EditCronHandler) EditFlagsCallback(c tele.Context, state fsm.Context) error {
 	state.Set(EditFlags)
-	cron, ok := state.MustGet("ce").(*scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler.CronJob)
 	if !ok {
 		return c.Send("cannot get cron id from context")
 	}
-	state.Update("fce", &cron.Flags)
+	state.Update("fce", cron.Flags)
 	return sendFlagsMenu(c, cron.Flags)
 
 }
 
 func (h *EditCronHandler) InputNewTitle(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(*scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler.CronJob)
 	if !ok {
 		return c.Send("cannot get cron from context")
 	}
+	defer state.Update("ce", cron)
+
 	title := c.Text()
 	cron.Title = title
 	state.Set(SelectEditingField)
+
 	return h.SendCronView(c, cron)
 }
 
@@ -125,18 +128,20 @@ func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 	if err != nil {
 		return c.Send("invalid time data: " + err.Error())
 	}
-	cron, ok := state.MustGet("ce").(*scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}
+	defer state.Update("ce", cron)
 
 	cron.At = at
 	state.Set(SelectEditingField)
+
 	return h.SendCronView(c, cron)
 }
 
 func (h *EditCronHandler) InputFlagCallback(c tele.Context, state fsm.Context) error {
-	flags, ok := state.MustGet("fce").(*scheduler.FlagSet)
+	flags, ok := state.MustGet("fce").(scheduler.FlagSet)
 	if !ok {
 		return answerCallback(c, "cannot get flags from context", true)
 	}
@@ -148,37 +153,42 @@ func (h *EditCronHandler) InputFlagCallback(c tele.Context, state fsm.Context) e
 		return answerCallback(c, "unknown callback: "+callback, true)
 	}
 
-	*flags = joinFlags(*flags, selectedFlag)
+	flags = joinFlags(flags, selectedFlag)
+	state.Update("fce", flags)
 
-	return sendFlagsMenu(c, *flags)
+	return sendFlagsMenu(c, flags)
 }
 
 func (h *EditCronHandler) AcceptFlagCallback(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(*scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}
-	flags, ok := state.MustGet("fce").(*scheduler.FlagSet)
+
+	flags, ok := state.MustGet("fce").(scheduler.FlagSet)
 	if !ok {
 		return answerCallback(c, "cannot get flags from context", true)
 	}
 
-	cron.Flags = *flags
+	cron.Flags = flags
 	state.Update("fce", nil)
+	state.Update("ce", cron)
+
 	state.Set(SelectEditingField)
 	return h.SendCronView(c, cron)
 }
 
 func (h *EditCronHandler) DoneEditingCallback(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(*scheduler.CronJob)
+	cron, ok := state.MustGet("ce").(scheduler.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}
 
 	state.Finish(true)
 	ctx := context.Background()
-	if err := h.crons.Update(ctx, *cron); err != nil {
+	if err := h.crons.Update(ctx, cron); err != nil {
 		return c.EditOrSend("не получилось сохранить: " + err.Error())
 	}
+
 	return c.Send("всё сохранено", tele.RemoveKeyboard)
 }

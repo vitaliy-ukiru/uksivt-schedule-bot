@@ -1,3 +1,4 @@
+BEGIN;
 INSERT INTO groups (year, spec, num)
 VALUES (19, 'ВЕБ', 1),
        (19, 'ВЕБ', 2),
@@ -109,3 +110,4 @@ VALUES (19, 'ВЕБ', 1),
        (22, 'Л', 1),
        (22, 'СА', 1),
        (22, 'СА', 2);
+COMMIT;

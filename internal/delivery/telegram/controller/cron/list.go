@@ -24,7 +24,7 @@ func (h *EditCronHandler) ListCrons(c tele.Context) error {
 	}
 	for _, cron := range crons {
 		err := c.Send(fmt.Sprintf(
-			"Title: %s\nAt:%s\nFlags:%s\n",
+			"Название: %s\nВремя:%s\nОпции:%s\n",
 			cron.Title,
 			cron.At.Format("15:04"),
 			flagString(cron.Flags, "; "),
