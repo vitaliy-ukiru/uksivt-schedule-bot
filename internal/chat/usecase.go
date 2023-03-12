@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
-	scheduleapi "github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/schedule-api"
+	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/group"
 )
 
 type LookupStatus byte
@@ -36,18 +36,20 @@ type Storage interface {
 	FindByID(ctx context.Context, chatId int64) (*ModelDTO, error)
 	FindByTelegramID(ctx context.Context, id int64) (*ModelDTO, error)
 
-	UpdateChatGroup(ctx context.Context, id int64, group *string) error
+	UpdateChatGroup(ctx context.Context, id int64, group *int16) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
+
 	Delete(ctx context.Context, chatId int64) error
 	Session(ctx context.Context, fn func(session Storage) error) error
 }
 
 type Service struct {
-	store Storage
+	store  Storage
+	groups group.Usecase
 }
 
-func NewService(store Storage) *Service {
-	return &Service{store: store}
+func NewService(store Storage, groups group.Usecase) *Service {
+	return &Service{store: store, groups: groups}
 }
 
 func (s *Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
@@ -100,7 +102,7 @@ func (s *Service) ByID(ctx context.Context, chatId int64) (*Chat, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find_by_id id=%d", chatId)
 	}
-	return s.modelToDomain(model)
+	return s.modelToDomain(ctx, model)
 }
 
 func (s *Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error) {
@@ -108,24 +110,34 @@ func (s *Service) ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, erro
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot find_by_tg chat=%d", chatTgId)
 	}
-	return s.modelToDomain(model)
+	return s.modelToDomain(ctx, model)
 }
 
-func (s *Service) modelToDomain(model *ModelDTO) (*Chat, error) {
+func (s *Service) modelToDomain(ctx context.Context, model *ModelDTO) (*Chat, error) {
 	chat := model.chat()
 	if chat.IsDeleted() {
 		return chat, ErrChatDeleted
+	}
+	if model.Group != nil {
+		g, err := s.groups.ByID(ctx, *model.Group)
+		if err != nil {
+			return nil, err
+		}
+		chat.Group = &g
 	}
 	return chat, nil
 }
 
 func (s *Service) SetGroup(ctx context.Context, chatTgID int64, group string) error {
-	if !scheduleapi.MatchGroup(group) {
-		return scheduleapi.ErrInvalidGroup
+	groupId, err := s.groups.FindID(ctx, group)
+	if err != nil {
+		return err
 	}
 
+	g := int16(groupId)
+
 	return errors.Wrapf(
-		s.store.UpdateChatGroup(ctx, chatTgID, &group),
+		s.store.UpdateChatGroup(ctx, chatTgID, &g),
 		"cannot set group chat=%d group=%+v", chatTgID, group,
 	)
 }
