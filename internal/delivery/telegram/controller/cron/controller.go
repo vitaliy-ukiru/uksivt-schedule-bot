@@ -1,7 +1,7 @@
 package cron
 
 import (
-	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/scheduler"
 	"go.uber.org/zap"

@@ -2,7 +2,7 @@ package telegram
 
 import (
 	"github.com/go-co-op/gocron"
-	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/config"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/controller/cron"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/delivery/telegram/controller/group"

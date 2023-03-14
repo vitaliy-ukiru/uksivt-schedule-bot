@@ -1,7 +1,7 @@
 package group
 
 import (
-	fsm "github.com/vitaliy-ukiru/fsm-telebot"
+	"github.com/vitaliy-ukiru/fsm-telebot"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/adapters/group"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"go.uber.org/zap"

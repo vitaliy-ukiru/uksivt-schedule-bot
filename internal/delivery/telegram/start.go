@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	pkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
+	chatPkg "github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/chat"
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
@@ -21,15 +21,15 @@ func (h *Handler) StartCommand(c tele.Context) error {
 	}
 
 	switch status {
-	case pkg.StatusRestored:
+	case chatPkg.StatusRestored:
 		return c.Send(fmt.Sprintf(
 			"Чат был удалён, возможно меня заблокировали. Но я восстановил данные.\n"+
 				"В чате выбрана группа <i>%s<i>. Отправьте /select_group для изменения.", *chat.Group,
 		))
-	case pkg.StatusCreated:
+	case chatPkg.StatusCreated:
 		return c.Send("Я тут новенький, сохраняю чат в базу.\n" +
 			"Отправьте /select_group для выбора группы.")
-	case pkg.StatusFound:
+	case chatPkg.StatusFound:
 		return c.Send("Зачем стартовать снова? Я уже и так тут есть")
 	default:
 		return c.Send("Возможно что-то пошло не по плану 🤨")
