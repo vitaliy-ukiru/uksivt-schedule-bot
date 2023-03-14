@@ -26,16 +26,6 @@ func (f FlagSet) Has(b FlagSet) bool {
 	return (f & b) != 0
 }
 
-func (f FlagSet) HasAny(other ...FlagSet) bool {
-	for _, b := range other {
-		if f.Has(b) {
-			return true
-		}
-
-	}
-	return false
-}
-
 func (f FlagSet) With(b FlagSet) FlagSet {
 	return f | b
 }
