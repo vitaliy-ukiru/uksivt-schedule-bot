@@ -126,7 +126,7 @@ func (h *Handler) cronFullOnReplace(p *cronParams) error {
 }
 
 func (h *Handler) cronReplaces(p *cronParams) error {
-	replaces := make([]schedule.Lesson, len(p.Lessons)/2)
+	replaces := make([]schedule.Lesson, 0, len(p.Lessons)/2)
 	for _, lesson := range p.Lessons {
 		if lesson.Replacement {
 			replaces = append(replaces, lesson)
