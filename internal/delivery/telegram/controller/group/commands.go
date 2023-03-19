@@ -3,15 +3,13 @@ package group
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 	tele "gopkg.in/telebot.v3"
 )
 
 func (h Handler) GetGroupCommand(c tele.Context) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+	ctx := context.Background()
 	chat, _, err := h.chats.Lookup(ctx, c.Chat().ID)
 	if err != nil {
 		h.logger.Error("cannot get chat", zap.Error(err))
