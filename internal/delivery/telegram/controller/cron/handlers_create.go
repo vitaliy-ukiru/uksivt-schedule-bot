@@ -177,7 +177,7 @@ func (h *CreateCronHandler) InputTitle(c tele.Context, state fsm.Context) error 
 			cron.At.Format("15:04"),
 			flagString(cron.Flags, ";"),
 		),
-		AcceptMarkup(),
+		AcceptMarkup,
 	)
 }
 
