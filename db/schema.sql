@@ -1,23 +1,21 @@
--- TODO PROPOSAL[CHAT_PK]: delete column ID, use telegram id as PRIMARY KEY
-
 BEGIN;
 create table if not exists groups
 (
 
-    id   bigint generated always as identity
+    id   integer generated always as identity
         primary key,
-    year smallint not null,
-    spec text     not null,
-    num  smallint not null
+    year integer not null,
+    spec text    not null,
+    num  integer not null
 );
 
 create table if not exists chats
 (
-    id            bigint generated always as identity
+    id         bigint generated always as identity
         primary key,
-    chat_id       bigint                                 not null
+    chat_id    bigint                                 not null
         unique,
-    group_id   smallint
+    group_id   integer
         references groups,
     created_at timestamp with time zone default now() not null,
     deleted_at timestamp with time zone
