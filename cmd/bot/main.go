@@ -184,7 +184,7 @@ func main() {
 
 	cron := gocron.NewScheduler(location)
 	storage := memory.NewStorage()
-	m := fsm.NewManager(bot, nil, storage)
+	m := fsm.NewManager(bot, nil, storage, nil)
 
 	{
 		handler.BindHandlers(m)

@@ -56,6 +56,7 @@ func (h *EditCronHandler) EditSelectCronCallback(c tele.Context, state fsm.Conte
 	if err != nil {
 		return answerCallback(c, "cannot get cron: "+err.Error(), true)
 	}
+
 	state.Set(SelectEditingField)
 	state.Update("ce", *cron)
 	return h.SendCronView(c, *cron)
@@ -91,19 +92,23 @@ func (h *EditCronHandler) EditTimeCallback(c tele.Context, state fsm.Context) er
 
 func (h *EditCronHandler) EditFlagsCallback(c tele.Context, state fsm.Context) error {
 	state.Set(EditFlags)
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
-	if !ok {
-		return c.Send("cannot get cron id from context")
+
+	var cron scheduler.CronJob
+	if err := state.Get("ce", &cron); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
+
 	state.Update("fce", cron.Flags)
 	return sendFlagsMenu(c, cron.Flags)
 
 }
 
 func (h *EditCronHandler) InputNewTitle(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
-	if !ok {
-		return c.Send("cannot get cron from context")
+	var cron scheduler.CronJob
+	if err := state.Get("ce", &cron); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
 
 	title := c.Text()
@@ -117,6 +122,7 @@ func (h *EditCronHandler) InputNewTitle(c tele.Context, state fsm.Context) error
 func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 	m, err := SelectTimeCallback.MustFilter().Process(c)
 	if err != nil {
+		_ = state.Finish(true)
 		return answerCallback(c, "cannot parse data: "+err.Error(), true)
 	}
 
@@ -129,10 +135,12 @@ func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 		return c.Send("invalid time data: " + err.Error())
 	}
 
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
-	if !ok {
-		return answerCallback(c, "cannot get cron from context", true)
+	var cron scheduler.CronJob
+	if err := state.Get("ce", &cron); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
+
 	cron.At = at
 	state.Update("ce", cron)
 	state.Set(SelectEditingField)
@@ -141,11 +149,11 @@ func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 }
 
 func (h *EditCronHandler) InputFlagCallback(c tele.Context, state fsm.Context) error {
-	flags, ok := state.MustGet("fce").(scheduler.FlagSet)
-	if !ok {
-		return answerCallback(c, "cannot get flags from context", true)
+	var flags scheduler.FlagSet
+	if err := state.Get("fce", &flags); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
-
 	callback := c.Callback().Data
 
 	selectedFlag, ok := FlagSetFromCallback(callback)
@@ -160,14 +168,16 @@ func (h *EditCronHandler) InputFlagCallback(c tele.Context, state fsm.Context) e
 }
 
 func (h *EditCronHandler) AcceptFlagCallback(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
-	if !ok {
-		return answerCallback(c, "cannot get cron from context", true)
+	var cron scheduler.CronJob
+	if err := state.Get("ce", &cron); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
 
-	flags, ok := state.MustGet("fce").(scheduler.FlagSet)
-	if !ok {
-		return answerCallback(c, "cannot get flags from context", true)
+	var flags scheduler.FlagSet
+	if err := state.Get("fce", &flags); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
 
 	if flags <= scheduler.NextDay {
@@ -183,9 +193,10 @@ func (h *EditCronHandler) AcceptFlagCallback(c tele.Context, state fsm.Context) 
 }
 
 func (h *EditCronHandler) DoneEditingCallback(c tele.Context, state fsm.Context) error {
-	cron, ok := state.MustGet("ce").(scheduler.CronJob)
-	if !ok {
-		return answerCallback(c, "cannot get cron from context", true)
+	var cron scheduler.CronJob
+	if err := state.Get("ce", &cron); err != nil {
+		_ = state.Finish(true)
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
 
 	state.Finish(true)

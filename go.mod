@@ -13,7 +13,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
-	github.com/vitaliy-ukiru/fsm-telebot v0.3.1
+	github.com/vitaliy-ukiru/fsm-telebot v0.4.1
 	go.uber.org/zap v1.13.0
 	gopkg.in/telebot.v3 v3.0.0
 	gopkg.in/yaml.v3 v3.0.1

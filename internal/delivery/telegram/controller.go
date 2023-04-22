@@ -53,7 +53,11 @@ func (h *Handler) BindHandlers(m *fsm.Manager) {
 	m.Group().Handle("/start", h.StartCommand)
 	m.Group().Handle("/help", h.HelpCommand)
 	m.Bind("/state", fsm.AnyState, func(c tele.Context, state fsm.Context) error {
-		return c.Send(state.State().String())
+		userState, err := state.State()
+		if err != nil {
+			return c.Send("error: " + err.Error())
+		}
+		return c.Send(userState.String())
 	})
 
 	m.Group().Handle("/cron", func(c tele.Context) error {

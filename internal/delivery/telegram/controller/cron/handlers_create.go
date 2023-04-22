@@ -29,20 +29,23 @@ type Cron struct {
 
 	ChatID int64
 	Issuer int64
-	Step   *fsm.State // step uses for back jumping in steps
+	//Step   *fsm.State // step uses for back jumping in steps
 }
 
 func (h *CreateCronHandler) OnlyIssuerMiddleware(m *fsm.Manager) tele.MiddlewareFunc {
 	return func(next tele.HandlerFunc) tele.HandlerFunc {
 		return m.HandlerAdapter(func(c tele.Context, state fsm.Context) error {
-			s := state.State()
+			s, err := state.State()
+			if err != nil {
+				return err
+			}
 			if !fsm.ContainsState(s, createSG.States...) {
 				return next(c)
 			}
 
-			cron, ok := state.MustGet("cc").(Cron)
-			if !ok {
-				return c.Send("error: fail get data")
+			var cron Cron
+			if err := state.Get("cc", &cron); err != nil {
+				return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 			}
 			if cron.Issuer != c.Sender().ID {
 				return nil // ignore
@@ -121,7 +124,6 @@ func (h *CreateCronHandler) SelectTimeCallback(c tele.Context, state fsm.Context
 	}
 
 	state.Set(SelectOpt)
-	cron.Step = &SelectOpt
 	return sendFlagsMenu(c, 0)
 }
 
@@ -137,7 +139,10 @@ func sendFlagsMenu(c tele.Context, flags scheduler.FlagSet) error {
 }
 
 func (h *CreateCronHandler) FlagsCallback(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(Cron)
+	var cron Cron
+	if err := state.Get("cc", &cron); err != nil {
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
+	}
 
 	callback := c.Callback().Data
 	selectedFlag, ok := FlagSetFromCallback(callback)
@@ -153,23 +158,27 @@ func (h *CreateCronHandler) FlagsCallback(c tele.Context, state fsm.Context) err
 }
 
 func (h *CreateCronHandler) AcceptFlagsCallback(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(Cron)
+	var cron Cron
+	if err := state.Get("cc", &cron); err != nil {
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
+	}
 
 	if cron.Flags <= scheduler.NextDay {
 		cron.Flags |= scheduler.Full
 	}
 
-	cron.Step = &InputTitle
 	state.Update("cc", cron)
 	state.Set(InputTitle)
 	return c.EditOrSend("Отправьте название данной задачи")
 }
 
 func (h *CreateCronHandler) InputTitle(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(Cron)
+	var cron Cron
+	if err := state.Get("cc", &cron); err != nil {
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
+	}
 
 	cron.Title = c.Text()
-	cron.Step = &AcceptCron
 	state.Update("cc", cron)
 	state.Set(AcceptCron)
 
@@ -186,7 +195,10 @@ func (h *CreateCronHandler) InputTitle(c tele.Context, state fsm.Context) error 
 
 func (h *CreateCronHandler) AcceptCallback(c tele.Context, state fsm.Context) error {
 	go c.Respond()
-	cron := state.MustGet("cc").(Cron)
+	var cron Cron
+	if err := state.Get("cc", &cron); err != nil {
+		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
+	}
 
 	chat, _, err := h.chats.Lookup(context.TODO(), c.Chat().ID)
 	if err != nil {
@@ -244,17 +256,17 @@ func flagString(flags scheduler.FlagSet, sep string) string {
 }
 
 func (h *CreateCronHandler) BackBtnCallback(c tele.Context, state fsm.Context) error {
-	cron := state.MustGet("cc").(Cron)
-	defer state.Update("cc", cron)
-	switch *cron.Step {
-	case SelectOpt:
-		cron.Step = nil
-		return h.CreateCommand(c, state)
-	case InputTitle:
-		cron.Step = &SelectOpt
-		return sendFlagsMenu(c, cron.Flags)
-	case AcceptCron:
-		return h.AcceptFlagsCallback(c, state)
-	}
+	//cron := state.MustGet("cc").(Cron)
+	//defer state.Update("cc", cron)
+	//switch *cron.Step {
+	//case SelectOpt:
+	//	cron.Step = nil
+	//	return h.CreateCommand(c, state)
+	//case InputTitle:
+	//	cron.Step = &SelectOpt
+	//	return sendFlagsMenu(c, cron.Flags)
+	//case AcceptCron:
+	//	return h.AcceptFlagsCallback(c, state)
+	//}
 	return nil
 }

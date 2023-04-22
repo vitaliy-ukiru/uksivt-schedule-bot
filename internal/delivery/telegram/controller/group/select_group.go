@@ -45,10 +45,10 @@ func (h *Handler) YearCallback(c tele.Context, state fsm.Context) error {
 }
 
 func (h *Handler) SpecCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(group.Group)
-	if !ok {
+	var g group.Group
+	if err := state.Get("g", &g); err != nil {
 		_ = state.Finish(true)
-		return c.Send("ERROR: invalid data, aborting")
+		return c.Send("ERROR: invalid data, aborting: " + err.Error())
 	}
 	g.Spec = c.Data()
 	_ = state.Update("g", g)
@@ -62,10 +62,10 @@ func (h *Handler) SpecCallback(c tele.Context, state fsm.Context) error {
 }
 
 func (h *Handler) NumCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(group.Group)
-	if !ok {
+	var g group.Group
+	if err := state.Get("g", &g); err != nil {
 		_ = state.Finish(true)
-		return c.Send("invalid data, aborting")
+		return c.Send("ERROR: invalid data, aborting: " + err.Error())
 	}
 	g.Number, _ = strconv.Atoi(c.Data())
 
@@ -77,11 +77,12 @@ func (h *Handler) NumCallback(c tele.Context, state fsm.Context) error {
 }
 
 func (h *Handler) AcceptCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(group.Group)
-	if !ok {
+	var g group.Group
+	if err := state.Get("g", &g); err != nil {
 		_ = state.Finish(true)
-		return c.Send("invalid data, aborting")
+		return c.Send("ERROR: invalid data, aborting: " + err.Error())
 	}
+
 	defer state.Finish(true)
 
 	if err := h.chats.SetGroup(context.Background(), c.Chat().ID, g.String()); err != nil {
@@ -107,10 +108,10 @@ func (h *Handler) BackToYearsCallback(c tele.Context, state fsm.Context) error {
 
 // BackToSpecsCallback returns to select spec menu
 func (h *Handler) BackToSpecsCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(group.Group)
-	if !ok {
+	var g group.Group
+	if err := state.Get("g", &g); err != nil {
 		_ = state.Finish(true)
-		return c.Send("ERROR: invalid data, aborting")
+		return c.Send("ERROR: invalid data, aborting: " + err.Error())
 	}
 
 	specsMarkup, err := h.getSpecsMarkup(context.TODO(), g.Year)
@@ -123,10 +124,10 @@ func (h *Handler) BackToSpecsCallback(c tele.Context, state fsm.Context) error {
 
 // BackToNumbersCallback returns to select group number menu
 func (h *Handler) BackToNumbersCallback(c tele.Context, state fsm.Context) error {
-	g, ok := state.MustGet("g").(group.Group)
-	if !ok {
+	var g group.Group
+	if err := state.Get("g", &g); err != nil {
 		_ = state.Finish(true)
-		return c.Send("ERROR: invalid data, aborting")
+		return c.Send("ERROR: invalid data, aborting: " + err.Error())
 	}
 
 	numsMarkup, err := h.getNumsMarkup(context.TODO(), g)
