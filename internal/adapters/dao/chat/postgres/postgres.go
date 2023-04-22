@@ -59,16 +59,15 @@ func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*ModelDTO,
 
 }
 
-func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *int16) error {
-	var g pgtype.Int2
-	if group != nil {
-		g.Int = *group
-		g.Status = pgtype.Present
-	}
+func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *int) error {
+	const updateGroupSQL = `UPDATE chats
+SET group_id = $1
+WHERE chat_id = $2;`
 
-	tag, err := r.q.UpdateGroup(ctx, g, id)
+	tag, err := r.c.Exec(ctx, updateGroupSQL, group, id)
+
 	if err != nil {
-		return errors.Wrap(err, "pg.update")
+		return errors.Wrap(err, "pg.update: exec query UpdateGroup")
 	}
 	return checkRowsAffected(tag)
 }
@@ -115,8 +114,8 @@ func (row rowType) ToModel() *ModelDTO {
 		chat.DeletedAt = &row.DeletedAt.Time
 	}
 
-	if row.GroupID.Status == pgtype.Present {
-		chat.Group = &row.GroupID.Int
+	if row.GroupID != 0 {
+		chat.Group = &row.GroupID
 	}
 
 	return chat
