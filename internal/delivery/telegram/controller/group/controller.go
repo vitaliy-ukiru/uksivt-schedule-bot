@@ -29,6 +29,13 @@ func (h *Handler) Bind(m *fsm.Manager) {
 		m.Bind(unique, SelectNumberState, h.NumCallback)
 		m.Bind(&AcceptBtn, AcceptGroupState, h.AcceptCallback)
 		m.Bind(&CancelBtn, fsm.AnyState, h.CancelCallback)
+
+		{
+			backBtn := &BackBtn
+			m.Bind(backBtn, SelectSpecState, h.BackToYearsCallback)
+			m.Bind(backBtn, SelectNumberState, h.BackToSpecsCallback)
+			m.Bind(backBtn, AcceptGroupState, h.BackToNumbersCallback)
+		}
 	}
 
 }
