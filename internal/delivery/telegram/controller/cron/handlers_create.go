@@ -154,11 +154,14 @@ func (h *CreateCronHandler) FlagsCallback(c tele.Context, state fsm.Context) err
 
 func (h *CreateCronHandler) AcceptFlagsCallback(c tele.Context, state fsm.Context) error {
 	cron := state.MustGet("cc").(Cron)
-	defer state.Update("cc", cron)
 
-	state.Set(InputTitle)
+	if cron.Flags <= scheduler.NextDay {
+		cron.Flags |= scheduler.Full
+	}
+
 	cron.Step = &InputTitle
-
+	state.Update("cc", cron)
+	state.Set(InputTitle)
 	return c.EditOrSend("Отправьте название данной задачи")
 }
 

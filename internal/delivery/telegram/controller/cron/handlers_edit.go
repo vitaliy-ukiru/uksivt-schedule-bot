@@ -170,6 +170,10 @@ func (h *EditCronHandler) AcceptFlagCallback(c tele.Context, state fsm.Context) 
 		return answerCallback(c, "cannot get flags from context", true)
 	}
 
+	if flags <= scheduler.NextDay {
+		flags = flags.With(scheduler.Full)
+	}
+
 	cron.Flags = flags
 	state.Update("fce", nil)
 	state.Update("ce", cron)
