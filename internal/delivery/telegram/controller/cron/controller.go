@@ -29,6 +29,7 @@ func (h *CreateCronHandler) Bind(m *fsm.Manager) {
 
 	m.Bind(&AcceptFlags, SelectOpt, h.AcceptFlagsCallback, h.OnlyIssuerMiddleware(m))
 	m.Bind(tele.OnText, InputTitle, h.InputTitle, h.OnlyIssuerMiddleware(m))
+	m.Bind(&CancelBtn, AcceptCron, h.CancelCreateCallback, h.OnlyIssuerMiddleware(m))
 	m.Bind(&AcceptBtn, AcceptCron, h.AcceptCallback, h.OnlyIssuerMiddleware(m))
 }
 

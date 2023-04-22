@@ -204,6 +204,12 @@ func (h *CreateCronHandler) AcceptCallback(c tele.Context, state fsm.Context) er
 	return c.Send("Задача создана.")
 }
 
+func (h *CreateCronHandler) CancelCreateCallback(c tele.Context, state fsm.Context) error {
+	go c.Respond()
+	state.Finish(true)
+	return c.EditOrSend("Создание отменено")
+}
+
 func (c Cron) ToDTO() scheduler.CreateJobDTO {
 	return scheduler.CreateJobDTO{
 		Title: c.Title,
