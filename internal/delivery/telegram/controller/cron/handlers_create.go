@@ -228,7 +228,6 @@ func joinFlags(flags scheduler.FlagSet, input scheduler.FlagSet) scheduler.FlagS
 		return result
 	}
 	return result.With(input)
-
 }
 
 func flagString(flags scheduler.FlagSet, sep string) string {

@@ -4,8 +4,6 @@ import (
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/pkg/telegram/keyboard"
 )
 
-//const FlagsCallback = "cron_c_flag"
-
 var BackBtn = keyboard.CallbackButton("Назад", "cron_c_back")
 
 var (
