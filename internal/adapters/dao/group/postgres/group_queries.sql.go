@@ -16,10 +16,10 @@ import (
 // calling SendBatch on pgx.Conn, pgxpool.Pool, or pgx.Tx, use the Scan methods
 // to parse the results.
 type Querier interface {
-	GroupByID(ctx context.Context, id pgtype.Int2) (GroupByIDRow, error)
+	GroupByID(ctx context.Context, id int) (GroupByIDRow, error)
 	// GroupByIDBatch enqueues a GroupByID query into batch to be executed
 	// later by the batch.
-	GroupByIDBatch(batch genericBatch, id pgtype.Int2)
+	GroupByIDBatch(batch genericBatch, id int)
 	// GroupByIDScan scans the result of an executed GroupByIDBatch query.
 	GroupByIDScan(results pgx.BatchResults) (GroupByIDRow, error)
 
@@ -37,17 +37,17 @@ type Querier interface {
 	// SelectYearsScan scans the result of an executed SelectYearsBatch query.
 	SelectYearsScan(results pgx.BatchResults) ([]int, error)
 
-	SelectSpecsForYear(ctx context.Context, year pgtype.Int2) ([]pgtype.Text, error)
+	SelectSpecsForYear(ctx context.Context, year int) ([]pgtype.Text, error)
 	// SelectSpecsForYearBatch enqueues a SelectSpecsForYear query into batch to be executed
 	// later by the batch.
-	SelectSpecsForYearBatch(batch genericBatch, year pgtype.Int2)
+	SelectSpecsForYearBatch(batch genericBatch, year int)
 	// SelectSpecsForYearScan scans the result of an executed SelectSpecsForYearBatch query.
 	SelectSpecsForYearScan(results pgx.BatchResults) ([]pgtype.Text, error)
 
-	SelectNumsForYearAndSpec(ctx context.Context, year pgtype.Int2, spec pgtype.Text) ([]int, error)
+	SelectNumsForYearAndSpec(ctx context.Context, year int, spec pgtype.Text) ([]int, error)
 	// SelectNumsForYearAndSpecBatch enqueues a SelectNumsForYearAndSpec query into batch to be executed
 	// later by the batch.
-	SelectNumsForYearAndSpecBatch(batch genericBatch, year pgtype.Int2, spec pgtype.Text)
+	SelectNumsForYearAndSpecBatch(batch genericBatch, year int, spec pgtype.Text)
 	// SelectNumsForYearAndSpecScan scans the result of an executed SelectNumsForYearAndSpecBatch query.
 	SelectNumsForYearAndSpecScan(results pgx.BatchResults) ([]int, error)
 }
@@ -180,30 +180,29 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 	return vt
 }
 
-const groupByIDSQL = `SELECT id, year, spec, num
+const groupByIDSQL = `SELECT year, spec, num
 FROM groups
 WHERE id = $1;`
 
 type GroupByIDRow struct {
-	ID   pgtype.Int2 `json:"id"`
-	Year pgtype.Int2 `json:"year"`
+	Year int         `json:"year"`
 	Spec pgtype.Text `json:"spec"`
-	Num  pgtype.Int2 `json:"num"`
+	Num  int         `json:"num"`
 }
 
 // GroupByID implements Querier.GroupByID.
-func (q *DBQuerier) GroupByID(ctx context.Context, id pgtype.Int2) (GroupByIDRow, error) {
+func (q *DBQuerier) GroupByID(ctx context.Context, id int) (GroupByIDRow, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "GroupByID")
 	row := q.conn.QueryRow(ctx, groupByIDSQL, id)
 	var item GroupByIDRow
-	if err := row.Scan(&item.ID, &item.Year, &item.Spec, &item.Num); err != nil {
+	if err := row.Scan(&item.Year, &item.Spec, &item.Num); err != nil {
 		return item, fmt.Errorf("query GroupByID: %w", err)
 	}
 	return item, nil
 }
 
 // GroupByIDBatch implements Querier.GroupByIDBatch.
-func (q *DBQuerier) GroupByIDBatch(batch genericBatch, id pgtype.Int2) {
+func (q *DBQuerier) GroupByIDBatch(batch genericBatch, id int) {
 	batch.Queue(groupByIDSQL, id)
 }
 
@@ -211,7 +210,7 @@ func (q *DBQuerier) GroupByIDBatch(batch genericBatch, id pgtype.Int2) {
 func (q *DBQuerier) GroupByIDScan(results pgx.BatchResults) (GroupByIDRow, error) {
 	row := results.QueryRow()
 	var item GroupByIDRow
-	if err := row.Scan(&item.ID, &item.Year, &item.Spec, &item.Num); err != nil {
+	if err := row.Scan(&item.Year, &item.Spec, &item.Num); err != nil {
 		return item, fmt.Errorf("scan GroupByIDBatch row: %w", err)
 	}
 	return item, nil
@@ -224,9 +223,9 @@ WHERE year = $1
   AND num = $3;`
 
 type IDByGroupParams struct {
-	Year pgtype.Int2
+	Year int
 	Spec pgtype.Text
-	Num  pgtype.Int2
+	Num  int
 }
 
 // IDByGroup implements Querier.IDByGroup.
@@ -313,7 +312,7 @@ WHERE year = $1
 ORDER BY spec;`
 
 // SelectSpecsForYear implements Querier.SelectSpecsForYear.
-func (q *DBQuerier) SelectSpecsForYear(ctx context.Context, year pgtype.Int2) ([]pgtype.Text, error) {
+func (q *DBQuerier) SelectSpecsForYear(ctx context.Context, year int) ([]pgtype.Text, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "SelectSpecsForYear")
 	rows, err := q.conn.Query(ctx, selectSpecsForYearSQL, year)
 	if err != nil {
@@ -335,7 +334,7 @@ func (q *DBQuerier) SelectSpecsForYear(ctx context.Context, year pgtype.Int2) ([
 }
 
 // SelectSpecsForYearBatch implements Querier.SelectSpecsForYearBatch.
-func (q *DBQuerier) SelectSpecsForYearBatch(batch genericBatch, year pgtype.Int2) {
+func (q *DBQuerier) SelectSpecsForYearBatch(batch genericBatch, year int) {
 	batch.Queue(selectSpecsForYearSQL, year)
 }
 
@@ -367,7 +366,7 @@ WHERE year = $1
 ORDER BY spec;`
 
 // SelectNumsForYearAndSpec implements Querier.SelectNumsForYearAndSpec.
-func (q *DBQuerier) SelectNumsForYearAndSpec(ctx context.Context, year pgtype.Int2, spec pgtype.Text) ([]int, error) {
+func (q *DBQuerier) SelectNumsForYearAndSpec(ctx context.Context, year int, spec pgtype.Text) ([]int, error) {
 	ctx = context.WithValue(ctx, "pggen_query_name", "SelectNumsForYearAndSpec")
 	rows, err := q.conn.Query(ctx, selectNumsForYearAndSpecSQL, year, spec)
 	if err != nil {
@@ -389,7 +388,7 @@ func (q *DBQuerier) SelectNumsForYearAndSpec(ctx context.Context, year pgtype.In
 }
 
 // SelectNumsForYearAndSpecBatch implements Querier.SelectNumsForYearAndSpecBatch.
-func (q *DBQuerier) SelectNumsForYearAndSpecBatch(batch genericBatch, year pgtype.Int2, spec pgtype.Text) {
+func (q *DBQuerier) SelectNumsForYearAndSpecBatch(batch genericBatch, year int, spec pgtype.Text) {
 	batch.Queue(selectNumsForYearAndSpecSQL, year, spec)
 }
 
