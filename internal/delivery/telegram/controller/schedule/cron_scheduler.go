@@ -14,7 +14,7 @@ import (
 
 func (h *Handler) CronSchedulerJob() {
 	now := time.Now()
-	h.logger.Info("start cron job")
+	h.logger.Info("starting processing scheduled cron")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
