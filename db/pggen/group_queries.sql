@@ -1,5 +1,5 @@
 --name: GroupByID :one
-SELECT id, year, spec, num
+SELECT year, spec, num
 FROM groups
 WHERE id = pggen.arg('ID');
 
