@@ -7,7 +7,7 @@ import (
 )
 
 type Storage interface {
-	FindByID(ctx context.Context, id int16) (Group, error)
+	FindByID(ctx context.Context, id int) (Group, error)
 	FindID(ctx context.Context, params Group) (int, error)
 
 	Years(ctx context.Context) ([]int, error)
@@ -18,7 +18,7 @@ type Storage interface {
 type Usecase interface {
 	FindID(ctx context.Context, group string) (int, error)
 
-	ByID(ctx context.Context, id int16) (string, error)
+	ByID(ctx context.Context, id int) (string, error)
 }
 
 type Service struct {
@@ -49,7 +49,7 @@ func (s *Service) FindID(ctx context.Context, group string) (int, error) {
 
 	return s.store.FindID(ctx, Group(g))
 }
-func (s *Service) ByID(ctx context.Context, id int16) (string, error) {
+func (s *Service) ByID(ctx context.Context, id int) (string, error) {
 	group, err := s.store.FindByID(ctx, id)
 	if err != nil {
 		return "", err

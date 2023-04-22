@@ -10,7 +10,7 @@ type CreateChatDTO struct {
 type ModelDTO struct {
 	ID        int64
 	TgID      int64
-	Group     *int16
+	Group     *int
 	CreatedAt time.Time
 	DeletedAt *time.Time
 }

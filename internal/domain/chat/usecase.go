@@ -36,7 +36,7 @@ type Storage interface {
 	FindByID(ctx context.Context, chatId int64) (*ModelDTO, error)
 	FindByTelegramID(ctx context.Context, id int64) (*ModelDTO, error)
 
-	UpdateChatGroup(ctx context.Context, id int64, group *int16) error
+	UpdateChatGroup(ctx context.Context, id int64, group *int) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
 
 	Delete(ctx context.Context, chatId int64) error
@@ -134,10 +134,8 @@ func (s *Service) SetGroup(ctx context.Context, chatTgID int64, group string) er
 		return err
 	}
 
-	g := int16(groupId)
-
 	return errors.Wrapf(
-		s.store.UpdateChatGroup(ctx, chatTgID, &g),
+		s.store.UpdateChatGroup(ctx, chatTgID, &groupId),
 		"cannot set group chat=%d group=%+v", chatTgID, group,
 	)
 }
