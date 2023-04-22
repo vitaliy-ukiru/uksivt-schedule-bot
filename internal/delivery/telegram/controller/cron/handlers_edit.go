@@ -105,10 +105,10 @@ func (h *EditCronHandler) InputNewTitle(c tele.Context, state fsm.Context) error
 	if !ok {
 		return c.Send("cannot get cron from context")
 	}
-	defer state.Update("ce", cron)
 
 	title := c.Text()
 	cron.Title = title
+	state.Update("ce", cron)
 	state.Set(SelectEditingField)
 
 	return h.SendCronView(c, cron)
@@ -128,13 +128,13 @@ func (h *EditCronHandler) InputTime(c tele.Context, state fsm.Context) error {
 	if err != nil {
 		return c.Send("invalid time data: " + err.Error())
 	}
+
 	cron, ok := state.MustGet("ce").(scheduler.CronJob)
 	if !ok {
 		return answerCallback(c, "cannot get cron from context", true)
 	}
-	defer state.Update("ce", cron)
-
 	cron.At = at
+	state.Update("ce", cron)
 	state.Set(SelectEditingField)
 
 	return h.SendCronView(c, cron)
