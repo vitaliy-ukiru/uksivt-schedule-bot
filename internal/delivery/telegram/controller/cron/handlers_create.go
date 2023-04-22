@@ -40,7 +40,7 @@ func (h *CreateCronHandler) OnlyIssuerMiddleware(m *fsm.Manager) tele.Middleware
 				return next(c)
 			}
 
-			cron, ok := state.MustGet("cc").(*Cron)
+			cron, ok := state.MustGet("cc").(Cron)
 			if !ok {
 				return c.Send("error: fail get data")
 			}
