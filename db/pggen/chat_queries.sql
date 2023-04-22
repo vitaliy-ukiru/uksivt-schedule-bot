@@ -13,11 +13,6 @@ SELECT id, chat_id, group_id, created_at, deleted_at
 FROM chats
 WHERE id = pggen.arg('ID');
 
---name: UpdateGroup :exec
-UPDATE chats
-SET group_id = pggen.arg('Group')
-WHERE chat_id = pggen.arg('ChatID');
-
 
 --name: UndeleteChat :exec
 UPDATE chats

@@ -37,13 +37,6 @@ type Querier interface {
 	// FindByIDScan scans the result of an executed FindByIDBatch query.
 	FindByIDScan(results pgx.BatchResults) (FindByIDRow, error)
 
-	UpdateGroup(ctx context.Context, group pgtype.Int2, chatID int64) (pgconn.CommandTag, error)
-	// UpdateGroupBatch enqueues a UpdateGroup query into batch to be executed
-	// later by the batch.
-	UpdateGroupBatch(batch genericBatch, group pgtype.Int2, chatID int64)
-	// UpdateGroupScan scans the result of an executed UpdateGroupBatch query.
-	UpdateGroupScan(results pgx.BatchResults) (pgconn.CommandTag, error)
-
 	UndeleteChat(ctx context.Context, chatID int64) (pgconn.CommandTag, error)
 	// UndeleteChatBatch enqueues a UndeleteChat query into batch to be executed
 	// later by the batch.
@@ -143,9 +136,6 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, findByIDSQL, findByIDSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindByID': %w", err)
 	}
-	if _, err := p.Prepare(ctx, updateGroupSQL, updateGroupSQL); err != nil {
-		return fmt.Errorf("prepare query 'UpdateGroup': %w", err)
-	}
 	if _, err := p.Prepare(ctx, undeleteChatSQL, undeleteChatSQL); err != nil {
 		return fmt.Errorf("prepare query 'UndeleteChat': %w", err)
 	}
@@ -231,7 +221,7 @@ WHERE chat_id = $1;`
 type FindByTgIDRow struct {
 	ID        int64              `json:"id"`
 	ChatID    int64              `json:"chat_id"`
-	GroupID   pgtype.Int2        `json:"group_id"`
+	GroupID   int                `json:"group_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
@@ -269,7 +259,7 @@ WHERE id = $1;`
 type FindByIDRow struct {
 	ID        int64              `json:"id"`
 	ChatID    int64              `json:"chat_id"`
-	GroupID   pgtype.Int2        `json:"group_id"`
+	GroupID   int                `json:"group_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 }
@@ -298,34 +288,6 @@ func (q *DBQuerier) FindByIDScan(results pgx.BatchResults) (FindByIDRow, error) 
 		return item, fmt.Errorf("scan FindByIDBatch row: %w", err)
 	}
 	return item, nil
-}
-
-const updateGroupSQL = `UPDATE chats
-SET group_id = $1
-WHERE chat_id = $2;`
-
-// UpdateGroup implements Querier.UpdateGroup.
-func (q *DBQuerier) UpdateGroup(ctx context.Context, group pgtype.Int2, chatID int64) (pgconn.CommandTag, error) {
-	ctx = context.WithValue(ctx, "pggen_query_name", "UpdateGroup")
-	cmdTag, err := q.conn.Exec(ctx, updateGroupSQL, group, chatID)
-	if err != nil {
-		return cmdTag, fmt.Errorf("exec query UpdateGroup: %w", err)
-	}
-	return cmdTag, err
-}
-
-// UpdateGroupBatch implements Querier.UpdateGroupBatch.
-func (q *DBQuerier) UpdateGroupBatch(batch genericBatch, group pgtype.Int2, chatID int64) {
-	batch.Queue(updateGroupSQL, group, chatID)
-}
-
-// UpdateGroupScan implements Querier.UpdateGroupScan.
-func (q *DBQuerier) UpdateGroupScan(results pgx.BatchResults) (pgconn.CommandTag, error) {
-	cmdTag, err := results.Exec()
-	if err != nil {
-		return cmdTag, fmt.Errorf("exec UpdateGroupBatch: %w", err)
-	}
-	return cmdTag, err
 }
 
 const undeleteChatSQL = `UPDATE chats
