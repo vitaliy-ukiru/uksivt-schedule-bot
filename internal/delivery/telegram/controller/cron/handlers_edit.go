@@ -63,31 +63,22 @@ func (h *EditCronHandler) EditSelectCronCallback(c tele.Context, state fsm.Conte
 }
 
 func (h *EditCronHandler) SendCronView(c tele.Context, cron scheduler.CronJob) error {
-	return c.Send(fmt.Sprintf(
-		"Название: %s\nВремя:%s\nОпции:%s\n\nВыберите что редактировать:",
-		cron.Title,
-		cron.At.Format("15:04"),
-		flagString(cron.Flags, "; "),
-	), SelectEditingFieldMarkup())
-}
-
-func (h *EditCronHandler) EditOrSendCronView(c tele.Context, cron scheduler.CronJob) error {
 	return c.EditOrSend(fmt.Sprintf(
 		"Название: %s\nВремя:%s\nОпции:%s\n\nВыберите что редактировать:",
 		cron.Title,
 		cron.At.Format("15:04"),
 		flagString(cron.Flags, "; "),
-	), SelectEditingFieldMarkup())
+	), SelectEditingFieldMarkup)
 }
 
 func (h *EditCronHandler) EditTitleCallback(c tele.Context, state fsm.Context) error {
 	state.Set(EditTitle)
-	return c.Send("Введите новое название", tele.RemoveKeyboard)
+	return c.EditOrSend("Введите новое название")
 }
 
 func (h *EditCronHandler) EditTimeCallback(c tele.Context, state fsm.Context) error {
 	state.Set(EditTime)
-	return c.Send(SelectTimeText, TimesMarkupAM(c.Sender().Recipient(), 30*time.Minute))
+	return c.EditOrSend(SelectTimeText, TimesMarkupAM(c.Sender().Recipient(), 30*time.Minute))
 }
 
 func (h *EditCronHandler) EditFlagsCallback(c tele.Context, state fsm.Context) error {
@@ -205,5 +196,5 @@ func (h *EditCronHandler) DoneEditingCallback(c tele.Context, state fsm.Context)
 		return c.EditOrSend("не получилось сохранить: " + err.Error())
 	}
 
-	return c.Send("всё сохранено", tele.RemoveKeyboard)
+	return c.EditOrSend("Изменения сохранены.")
 }
