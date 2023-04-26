@@ -42,6 +42,7 @@ func (h *EditCronHandler) Bind(m *fsm.Manager) {
 	m.Bind(&SelectEditTime, SelectEditingField, h.EditTimeCallback)
 	m.Bind(&SelectEditFlags, SelectEditingField, h.EditFlagsCallback)
 	m.Bind(&DoneEditing, SelectEditingField, h.DoneEditingCallback)
+	m.Bind(&CancelEditingBtn, SelectEditingField, h.CancelEditingCallback)
 
 	m.Bind(tele.OnText, EditTitle, h.InputNewTitle)
 	m.Bind(SelectTimeCallback, EditTime, h.InputTime)

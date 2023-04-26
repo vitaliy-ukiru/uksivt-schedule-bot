@@ -198,3 +198,8 @@ func (h *EditCronHandler) DoneEditingCallback(c tele.Context, state fsm.Context)
 
 	return c.EditOrSend("Изменения сохранены.")
 }
+
+func (h *EditCronHandler) CancelEditingCallback(c tele.Context, state fsm.Context) error {
+	_ = state.Finish(true)
+	return c.EditOrSend("Изменение отменено")
+}
