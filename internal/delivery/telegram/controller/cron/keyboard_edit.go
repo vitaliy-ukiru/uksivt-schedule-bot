@@ -32,18 +32,15 @@ func SelectCronsMarkup(crons []scheduler.CronJob) *tele.ReplyMarkup {
 }
 
 var (
-	SelectEditTitle  = keyboard.Text("Название")
-	SelectEditTime   = keyboard.Text("Время")
-	SelectEditFlags  = keyboard.Text("Опции")
-	DoneEditing      = keyboard.Text("Сохранить")
-	CancelEditingBtn = keyboard.Text("Закрыть")
+	SelectEditTitle  = keyboard.CallbackButton("Название", "cron_e_title")
+	SelectEditTime   = keyboard.CallbackButton("Время", "cron_e_time")
+	SelectEditFlags  = keyboard.CallbackButton("Опции", "cron_e_flags")
+	DoneEditing      = keyboard.CallbackButton("Сохранить", "cron_e_done")
+	CancelEditingBtn = keyboard.CallbackButton("Закрыть", "cron_e_cancel")
 )
 
-func SelectEditingFieldMarkup() *tele.ReplyMarkup {
-	m := keyboard.NewBuilderBuffer(3, 2).
-		Add(SelectEditTitle, SelectEditTime, SelectEditFlags).
-		Add(DoneEditing, CancelEditingBtn).
-		Reply()
-	m.ResizeKeyboard = true
-	return m
-}
+var SelectEditingFieldMarkup = keyboard.
+	NewBuilderBuffer(3, 2).
+	Add(SelectEditTitle, SelectEditTime, SelectEditFlags).
+	Add(DoneEditing, CancelEditingBtn).
+	Inline()
