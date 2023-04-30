@@ -88,10 +88,14 @@ func (d *Data) buildData(kwArgs M, args []string) ([]string, error) {
 var (
 	ErrInvalidPrefix     = errors.New("invalid callback data prefix")
 	ErrInvalidPartsCount = errors.New("invalid parts count")
+	ErrInvalidPayload    = errors.New("invalid payload format")
 )
 
 func (d *Data) Parse(data string) (M, error) {
 	parts := strings.Split(data, d.Sep)
+	if len(parts) < 2 {
+		return nil, ErrInvalidPayload
+	}
 	prefix, parts := parts[0], parts[1:]
 	return d.union(prefix, parts)
 
