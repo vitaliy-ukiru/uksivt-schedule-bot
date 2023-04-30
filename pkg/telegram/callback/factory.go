@@ -63,9 +63,7 @@ func (v ErrValueNotPassed) Error() string {
 func (v ErrValueNotPassed) Key() string { return string(v) }
 
 func (d *Data) buildData(kwArgs M, args []string) ([]string, error) {
-	var data []string
-
-	args = append([]string(nil), args...) // copy
+	data := make([]string, 0, len(kwArgs)+len(args))
 
 	for _, key := range d.keys {
 		v, ok := getKey(kwArgs, key)
