@@ -7,21 +7,15 @@ import (
 	tele "gopkg.in/telebot.v3"
 )
 
-func makeSet(arr []string) map[string]struct{} {
-	m := make(map[string]struct{})
-	for _, s := range arr {
-		m[s] = struct{}{}
-	}
-
-	return m
-}
-
 type Filter struct {
 	data   *Data
 	config M
 }
 
 type ErrInvalidKey string
+
+func (v ErrInvalidKey) Error() string { return fmt.Sprintf("invalid key: %q", string(v)) }
+func (v ErrInvalidKey) Key() string   { return string(v) }
 
 func (d *Data) Filter(kw ...M) (Filter, error) {
 	var m M
@@ -42,13 +36,38 @@ func (d *Data) Filter(kw ...M) (Filter, error) {
 	}, nil
 }
 
-func (d Data) MustFilter(kw ...M) Filter {
+func (d *Data) MustFilter(kw ...M) Filter {
 	f, err := d.Filter(kw...)
 	if err != nil {
 		panic(err)
 	}
 
 	return f
+}
+
+var ErrFilter = errors.New("filter is not equals")
+
+func (f Filter) Process(c tele.Context) (M, error) {
+	data, err := f.data.ParseTele(c.Callback())
+	if err != nil {
+		return nil, err
+	}
+
+	return data, f.check(data)
+}
+
+func (f Filter) check(data M) error {
+	if f.config == nil { // not specific filter
+		return nil
+	}
+
+	for key, value := range f.config {
+		if v, ok := data[key]; !ok || v != value {
+			return ErrFilter
+		}
+	}
+
+	return nil
 }
 
 type HandlerFunc func(ctx tele.Context, data M) error
@@ -71,27 +90,11 @@ func (f Filter) Handle(group Handleable, h HandlerFunc, m ...tele.MiddlewareFunc
 	}, m...)
 }
 
-var ErrFilter = errors.New("filter is not equals")
-
-func (f Filter) Process(c tele.Context) (M, error) {
-	data, err := f.data.ParseTele(c.Callback())
-	if err != nil {
-		return nil, err
+func makeSet(arr []string) map[string]struct{} {
+	m := make(map[string]struct{})
+	for _, s := range arr {
+		m[s] = struct{}{}
 	}
 
-	if f.config == nil { // not specific filter
-		return data, nil
-	}
-
-	for key, value := range data {
-		if f.config[key] != value {
-			return nil, ErrFilter
-		}
-	}
-
-	return data, nil
-
+	return m
 }
-
-func (v ErrInvalidKey) Error() string { return fmt.Sprintf("invalid key: %q", v) }
-func (v ErrInvalidKey) Key() string   { return string(v) }
