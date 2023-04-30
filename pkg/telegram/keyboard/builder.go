@@ -79,13 +79,13 @@ func (b *Builder) SplitAll(max ...int) *Builder {
 }
 
 func (b Builder) Inline() *tele.ReplyMarkup {
-	m := &tele.ReplyMarkup{}
+	m := new(tele.ReplyMarkup)
 	m.Inline(b.rows...)
 	return m
 }
 
 func (b Builder) Reply() *tele.ReplyMarkup {
-	m := &tele.ReplyMarkup{}
+	m := new(tele.ReplyMarkup)
 	m.Reply(b.rows...)
 	return m
 }
