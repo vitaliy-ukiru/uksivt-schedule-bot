@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+type M map[string]string
+
 type Data struct {
 	Prefix string
 	Sep    string
@@ -35,14 +37,7 @@ func NewWithSeparator(prefix string, sep string, keys ...string) *Data {
 
 const MaxCallbackDataSize = 64
 
-type M map[string]string
-
-type ErrValueNotPassed string
-
-var ErrSeparatorInValue = errors.New("separator symbol in callback value")
-var ErrCallbackTooLong = errors.New("callback data too long")
-
-func (d Data) New(kwParts M, parts ...string) (string, error) {
+func (d *Data) New(kwParts M, parts ...string) (string, error) {
 	data, err := d.buildData(kwParts, parts)
 	if err != nil {
 		return "", err
@@ -54,6 +49,18 @@ func (d Data) New(kwParts M, parts ...string) (string, error) {
 	}
 	return d.Prefix + d.Sep + result, nil
 }
+
+var (
+	ErrSeparatorInValue = errors.New("separator symbol in callback value")
+	ErrCallbackTooLong  = errors.New("callback data too long")
+)
+
+type ErrValueNotPassed string
+
+func (v ErrValueNotPassed) Error() string {
+	return fmt.Sprintf("not passed value for key: %q", string(v))
+}
+func (v ErrValueNotPassed) Key() string { return string(v) }
 
 func (d *Data) buildData(kwArgs M, args []string) ([]string, error) {
 	var data []string
@@ -121,8 +128,3 @@ func getKey[T comparable, K any](m map[T]K, key T) (v K, ok bool) {
 
 	return
 }
-
-func (v ErrValueNotPassed) Error() string {
-	return fmt.Sprintf("not passed value for key: %q", string(v))
-}
-func (v ErrValueNotPassed) Key() string { return string(v) }
