@@ -52,7 +52,7 @@ func (d Data) New(kwParts M, parts ...string) (string, error) {
 	if len(result) > MaxCallbackDataSize {
 		return "", ErrCallbackTooLong
 	}
-	return result, nil
+	return d.Prefix + d.Sep + result, nil
 }
 
 func (d *Data) buildData(kwArgs M, args []string) ([]string, error) {
