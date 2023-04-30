@@ -101,9 +101,7 @@ func (h *EditCronHandler) InputNewTitle(c tele.Context, state fsm.Context) error
 		_ = state.Finish(true)
 		return answerCallback(c, "cannot get cron from context: "+err.Error(), true)
 	}
-
-	title := c.Text()
-	cron.Title = title
+	cron.Title = c.Text()
 	state.Update("ce", cron)
 	state.Set(SelectEditingField)
 
