@@ -188,7 +188,7 @@ func main() {
 
 	{
 		handler.BindHandlers(m)
-		if err := handler.BindCrons(cron); err != nil {
+		if err := handler.Schedule(cron); err != nil {
 			log.Fatal("cannot schedule task", zap.Error(err))
 		}
 	}

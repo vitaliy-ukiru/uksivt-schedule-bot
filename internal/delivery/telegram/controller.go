@@ -75,7 +75,7 @@ func (h *Handler) BindHandlers(m *fsm.Manager) {
 	}
 }
 
-func (h *Handler) BindCrons(s *gocron.Scheduler) error {
+func (h *Handler) Schedule(s *gocron.Scheduler) error {
 	_, err := s.Cron(h.cfg.Scheduler.Cron).Do(h.lessons.CronSchedulerJob)
 	return err
 }
