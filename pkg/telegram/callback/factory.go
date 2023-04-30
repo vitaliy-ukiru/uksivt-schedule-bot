@@ -55,7 +55,7 @@ func (d Data) New(kwParts M, parts ...string) (string, error) {
 	return result, nil
 }
 
-func (d Data) buildData(kwArgs M, args []string) ([]string, error) {
+func (d *Data) buildData(kwArgs M, args []string) ([]string, error) {
 	var data []string
 
 	args = append([]string(nil), args...) // copy
@@ -85,7 +85,7 @@ var (
 	ErrInvalidPartsCount = errors.New("invalid parts count")
 )
 
-func (d Data) Parse(data string) (M, error) {
+func (d *Data) Parse(data string) (M, error) {
 	parts := strings.Split(data, d.Sep)
 	prefix, parts := parts[0], parts[1:]
 	return d.union(prefix, parts)
@@ -94,7 +94,7 @@ func (d Data) Parse(data string) (M, error) {
 
 const PrefixMapKey = "@"
 
-func (d Data) union(prefix string, parts []string) (M, error) {
+func (d *Data) union(prefix string, parts []string) (M, error) {
 	if prefix != d.Prefix {
 		return nil, ErrInvalidPrefix
 	}
