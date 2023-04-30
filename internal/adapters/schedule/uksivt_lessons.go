@@ -54,7 +54,7 @@ func (l Lesson) fmtTime() string {
 	formatted := make([]string, len(matches))
 
 	for i, match := range matches {
-		formatted[i] = fmt.Sprintf(" %s  — %s", match[1], match[2])
+		formatted[i] = fmt.Sprintf(" %s — %s", match[1], match[2])
 	}
 
 	return strings.Join(formatted, "\n")
