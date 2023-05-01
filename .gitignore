@@ -1,4 +1,4 @@
 .idea/
 .env
 configs/*.prod.yaml
-./configs/dev.yaml
+configs/*.dev.yaml
