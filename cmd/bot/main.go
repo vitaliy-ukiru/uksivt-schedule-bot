@@ -192,11 +192,13 @@ func main() {
 			log.Fatal("cannot schedule task", zap.Error(err))
 		}
 	}
+
 	{
 		log.Info("start listening")
 		cron.StartAsync()
 		go bot.Start()
 	}
+
 	{
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit,
@@ -208,8 +210,8 @@ func main() {
 		sig := <-quit
 		log.Warn("shutdown app", zap.String("signal", sig.String()))
 	}
-	{
 
+	{
 		cron.Stop()
 		bot.Stop()
 		log.Info("stopped bot")
