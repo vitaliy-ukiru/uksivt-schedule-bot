@@ -10,8 +10,8 @@ paths:
       responses:
         200:
           description: List of groups
-          content:
-            '*/*':
+          content:              
+            'application/json':
               schema:
                 type: array
                 items:
@@ -36,7 +36,7 @@ paths:
         200:
           description: Lessons on week that starts {from_date}
           content:
-            '*/*':
+            'application/json':
               schema:
                 type: object
                 additionalProperties:
