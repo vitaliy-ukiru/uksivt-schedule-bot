@@ -1,0 +1,14 @@
+# Database settings sets in environment variables
+
+schedule-api:
+  url: https://back.uksivt.com/api/v1
+telegram:
+  timeout: "2s"
+cron-scheduler:
+  cron: "*/30 * * * *" # At every 30th minute
+logger:
+  output:
+    paths: ["stdout"]
+    error-paths: ["stdout", "/logs/bot.errors.log"]
+    format: "json"
+  level: "info"
