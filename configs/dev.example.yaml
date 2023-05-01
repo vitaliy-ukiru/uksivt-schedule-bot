@@ -1,0 +1,14 @@
+# This file example of development config. It's full works.
+# Database settings sets in environment variables
+schedule-api:
+  url: https://back.uksivt.com/api/v1
+telegram:
+  timeout: "2s"
+cron-scheduler:
+  cron: "*/10 * * * *" # At every 10th minute
+logger:
+  output:
+    paths: [ "stdout" ]
+    error-paths: [ "stdout" ]
+    format: "console"
+  level: "debug"
