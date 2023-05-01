@@ -141,7 +141,7 @@ func main() {
 
 	var (
 		chatStorage = chatPostgres.NewRepository(pool)
-		chatService = chat.NewService(chatStorage, groupService)
+		chatService = chat.NewService(chatStorage, groupService, log)
 	)
 
 	log.Debug("chat services configured")

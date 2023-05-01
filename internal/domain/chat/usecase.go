@@ -51,8 +51,8 @@ type Service struct {
 	log    *zap.Logger
 }
 
-func NewService(store Storage, groups group.Usecase) *Service {
-	return &Service{store: store, groups: groups}
+func NewService(store Storage, groups group.Usecase, log *zap.Logger) *Service {
+	return &Service{store: store, groups: groups, log: log}
 }
 
 func (s *Service) Create(ctx context.Context, tgId int64) (*Chat, error) {
