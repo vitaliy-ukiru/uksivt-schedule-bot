@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/vitaliy-ukiru/uksivt-schedule-bot/internal/domain/group"
+	"go.uber.org/zap"
 )
 
 type LookupStatus byte
@@ -22,7 +23,7 @@ type Usecase interface {
 	ByID(ctx context.Context, chatId int64) (*Chat, error)
 	Lookup(ctx context.Context, tgId int64) (*Chat, LookupStatus, error)
 	ByTelegramID(ctx context.Context, chatTgId int64) (*Chat, error)
-	//ActiveChats(ctx context.Context) ([]Chat, error)
+	ActiveChats(ctx context.Context) ([]*Chat, error)
 
 	SetGroup(ctx context.Context, chatTgID int64, group string) error
 	ClearGroup(ctx context.Context, chatTgID int64) error
@@ -35,6 +36,7 @@ type Storage interface {
 	Create(ctx context.Context, chatId int64) (CreateChatDTO, error)
 	FindByID(ctx context.Context, chatId int64) (*ModelDTO, error)
 	FindByTelegramID(ctx context.Context, id int64) (*ModelDTO, error)
+	FindAllActiveChats(ctx context.Context) ([]*ModelDTO, error)
 
 	UpdateChatGroup(ctx context.Context, id int64, group *int) error
 	RestoreFromDeleted(ctx context.Context, id int64) error
@@ -46,6 +48,7 @@ type Storage interface {
 type Service struct {
 	store  Storage
 	groups group.Usecase
+	log    *zap.Logger
 }
 
 func NewService(store Storage, groups group.Usecase) *Service {
@@ -126,6 +129,23 @@ func (s *Service) modelToDomain(ctx context.Context, model *ModelDTO) (*Chat, er
 		chat.Group = &g
 	}
 	return chat, nil
+}
+
+func (s *Service) ActiveChats(ctx context.Context) ([]*Chat, error) {
+	models, err := s.store.FindAllActiveChats(ctx)
+	if err != nil {
+		return nil, err
+	}
+	chats := make([]*Chat, 0, len(models))
+	for _, model := range models {
+		chat, err := s.modelToDomain(ctx, model)
+		if err != nil {
+			s.log.Error("fail get domain", zap.Error(err), zap.Int64("chat", model.ID))
+			continue
+		}
+		chats = append(chats, chat)
+	}
+	return chats, nil
 }
 
 func (s *Service) SetGroup(ctx context.Context, chatTgID int64, group string) error {

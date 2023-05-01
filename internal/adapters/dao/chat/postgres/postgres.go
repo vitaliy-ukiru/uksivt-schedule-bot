@@ -56,7 +56,19 @@ func (r *Repository) FindByTelegramID(ctx context.Context, id int64) (*ModelDTO,
 		return nil, errors.Wrap(err, "pg.by_tg")
 	}
 	return rowType(row).ToModel(), nil
+}
 
+func (r *Repository) FindAllActiveChats(ctx context.Context) ([]*ModelDTO, error) {
+	rows, err := r.q.FindAllActiveChats(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	models := make([]*ModelDTO, len(rows))
+	for i, row := range rows {
+		models[i] = rowType(row).ToModel()
+	}
+	return models, nil
 }
 
 func (r *Repository) UpdateChatGroup(ctx context.Context, id int64, group *int) error {

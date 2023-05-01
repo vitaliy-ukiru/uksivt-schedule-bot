@@ -37,6 +37,13 @@ type Querier interface {
 	// FindByIDScan scans the result of an executed FindByIDBatch query.
 	FindByIDScan(results pgx.BatchResults) (FindByIDRow, error)
 
+	FindAllActiveChats(ctx context.Context) ([]FindAllActiveChatsRow, error)
+	// FindAllActiveChatsBatch enqueues a FindAllActiveChats query into batch to be executed
+	// later by the batch.
+	FindAllActiveChatsBatch(batch genericBatch)
+	// FindAllActiveChatsScan scans the result of an executed FindAllActiveChatsBatch query.
+	FindAllActiveChatsScan(results pgx.BatchResults) ([]FindAllActiveChatsRow, error)
+
 	UndeleteChat(ctx context.Context, chatID int64) (pgconn.CommandTag, error)
 	// UndeleteChatBatch enqueues a UndeleteChat query into batch to be executed
 	// later by the batch.
@@ -136,6 +143,9 @@ func PrepareAllQueries(ctx context.Context, p preparer) error {
 	if _, err := p.Prepare(ctx, findByIDSQL, findByIDSQL); err != nil {
 		return fmt.Errorf("prepare query 'FindByID': %w", err)
 	}
+	if _, err := p.Prepare(ctx, findAllActiveChatsSQL, findAllActiveChatsSQL); err != nil {
+		return fmt.Errorf("prepare query 'FindAllActiveChats': %w", err)
+	}
 	if _, err := p.Prepare(ctx, undeleteChatSQL, undeleteChatSQL); err != nil {
 		return fmt.Errorf("prepare query 'UndeleteChat': %w", err)
 	}
@@ -181,7 +191,8 @@ func (tr *typeResolver) setValue(vt pgtype.ValueTranscoder, val interface{}) pgt
 }
 
 const createChatSQL = `INSERT INTO chats(chat_id)
-VALUES ($1) RETURNING id, created_at;`
+VALUES ($1)
+RETURNING id, created_at;`
 
 type CreateChatRow struct {
 	ID        int64              `json:"id"`
@@ -288,6 +299,66 @@ func (q *DBQuerier) FindByIDScan(results pgx.BatchResults) (FindByIDRow, error) 
 		return item, fmt.Errorf("scan FindByIDBatch row: %w", err)
 	}
 	return item, nil
+}
+
+const findAllActiveChatsSQL = `SELECT id, chat_id, group_id, created_at, deleted_at
+FROM chats
+WHERE deleted_at IS NULL;`
+
+type FindAllActiveChatsRow struct {
+	ID        int64              `json:"id"`
+	ChatID    int64              `json:"chat_id"`
+	GroupID   int                `json:"group_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+// FindAllActiveChats implements Querier.FindAllActiveChats.
+func (q *DBQuerier) FindAllActiveChats(ctx context.Context) ([]FindAllActiveChatsRow, error) {
+	ctx = context.WithValue(ctx, "pggen_query_name", "FindAllActiveChats")
+	rows, err := q.conn.Query(ctx, findAllActiveChatsSQL)
+	if err != nil {
+		return nil, fmt.Errorf("query FindAllActiveChats: %w", err)
+	}
+	defer rows.Close()
+	items := []FindAllActiveChatsRow{}
+	for rows.Next() {
+		var item FindAllActiveChatsRow
+		if err := rows.Scan(&item.ID, &item.ChatID, &item.GroupID, &item.CreatedAt, &item.DeletedAt); err != nil {
+			return nil, fmt.Errorf("scan FindAllActiveChats row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close FindAllActiveChats rows: %w", err)
+	}
+	return items, err
+}
+
+// FindAllActiveChatsBatch implements Querier.FindAllActiveChatsBatch.
+func (q *DBQuerier) FindAllActiveChatsBatch(batch genericBatch) {
+	batch.Queue(findAllActiveChatsSQL)
+}
+
+// FindAllActiveChatsScan implements Querier.FindAllActiveChatsScan.
+func (q *DBQuerier) FindAllActiveChatsScan(results pgx.BatchResults) ([]FindAllActiveChatsRow, error) {
+	rows, err := results.Query()
+	if err != nil {
+		return nil, fmt.Errorf("query FindAllActiveChatsBatch: %w", err)
+	}
+	defer rows.Close()
+	items := []FindAllActiveChatsRow{}
+	for rows.Next() {
+		var item FindAllActiveChatsRow
+		if err := rows.Scan(&item.ID, &item.ChatID, &item.GroupID, &item.CreatedAt, &item.DeletedAt); err != nil {
+			return nil, fmt.Errorf("scan FindAllActiveChatsBatch row: %w", err)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("close FindAllActiveChatsBatch rows: %w", err)
+	}
+	return items, err
 }
 
 const undeleteChatSQL = `UPDATE chats
